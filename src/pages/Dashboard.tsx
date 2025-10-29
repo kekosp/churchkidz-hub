@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Users, UserCheck, ClipboardList, BarChart3 } from "lucide-react";
+import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -56,6 +56,12 @@ const Dashboard = () => {
       description: "View statistics and analytics",
       icon: BarChart3,
       href: "/reports",
+    },
+    {
+      title: "Manage Roles",
+      description: "Assign user roles and permissions",
+      icon: Shield,
+      href: "/manage-roles",
     },
   ];
 
