@@ -291,14 +291,14 @@ const Children = () => {
                     <div className="space-y-2">
                       <Label htmlFor="servant_id">Assigned Servant/Teacher</Label>
                       <Select
-                        value={formData.servant_id}
-                        onValueChange={(value) => setFormData({ ...formData, servant_id: value })}
+                        value={formData.servant_id || "unassigned"}
+                        onValueChange={(value) => setFormData({ ...formData, servant_id: value === "unassigned" ? "" : value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a servant" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="unassigned">None</SelectItem>
                           {servants.map((servant: any) => (
                             <SelectItem key={servant.user_id} value={servant.user_id}>
                               {servant.profiles?.full_name || "Unknown"}
