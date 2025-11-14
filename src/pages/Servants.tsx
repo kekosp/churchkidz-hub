@@ -19,9 +19,9 @@ const Servants = () => {
       navigate("/auth");
       return;
     }
-    if (user && userRole === "admin") {
+    if (user && (userRole === "admin" || userRole === "servant")) {
       fetchServants();
-    } else if (user && userRole !== "admin") {
+    } else if (user && userRole !== "admin" && userRole !== "servant") {
       navigate("/dashboard");
     }
   }, [user, userRole, authLoading, navigate]);
