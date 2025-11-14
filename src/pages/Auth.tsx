@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { UserPlus, LogIn } from "lucide-react";
+import { loginSchema, signupSchema } from "@/lib/validation-schemas";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -34,13 +35,32 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate input
+      const validation = loginSchema.safeParse({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (!validation.success) {
+        const errors = validation.error.errors.map((e) => e.message).join(", ");
+        toast.error(errors);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error("Login error:", error);
+        // Show user-friendly message based on error
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or password");
+        } else {
+          toast.error("Unable to log in. Please try again.");
+        }
         return;
       }
 
@@ -49,7 +69,8 @@ const Auth = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      toast.error("An error occurred during login");
+      console.error("Unexpected login error:", error);
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -60,6 +81,21 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate input
+      const validation = signupSchema.safeParse({
+        email: signupEmail,
+        password: signupPassword,
+        full_name: signupFullName,
+        phone_number: signupPhone,
+      });
+
+      if (!validation.success) {
+        const errors = validation.error.errors.map((e) => e.message).join(", ");
+        toast.error(errors);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
@@ -73,7 +109,13 @@ const Auth = () => {
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error("Signup error:", error);
+        // Show user-friendly message based on error
+        if (error.message.includes("already registered")) {
+          toast.error("This email is already registered. Please log in.");
+        } else {
+          toast.error("Unable to create account. Please try again.");
+        }
         return;
       }
 
@@ -85,7 +127,8 @@ const Auth = () => {
         setSignupPhone("");
       }
     } catch (error: any) {
-      toast.error("An error occurred during signup");
+      console.error("Unexpected signup error:", error);
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
