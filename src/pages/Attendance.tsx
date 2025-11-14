@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
+import { attendanceSchema } from "@/lib/validation-schemas";
 
 interface Child {
   id: string;
@@ -116,14 +117,34 @@ const Attendance = () => {
 
     try {
       setSaving(true);
-      
-      const records = Object.values(attendance).map((record) => ({
-        child_id: record.child_id,
+
+      // Validate service date
+      const validation = attendanceSchema.safeParse({
         service_date: serviceDate,
-        present: record.present,
-        notes: record.notes,
-        recorded_by: user.id,
-      }));
+        notes: "", // We validate individual notes below
+      });
+
+      if (!validation.success) {
+        const errors = validation.error.errors.map((e) => e.message).join(", ");
+        toast.error(errors);
+        setSaving(false);
+        return;
+      }
+
+      // Validate each attendance record's notes
+      const records = Object.values(attendance).map((record) => {
+        const noteValidation = attendanceSchema.shape.notes.safeParse(record.notes);
+        if (!noteValidation.success) {
+          throw new Error("Notes must be less than 500 characters");
+        }
+        return {
+          child_id: record.child_id,
+          service_date: serviceDate,
+          present: record.present,
+          notes: record.notes,
+          recorded_by: user.id,
+        };
+      });
 
       const { error } = await supabase
         .from("attendance")
@@ -135,8 +156,12 @@ const Attendance = () => {
 
       toast.success("Attendance saved successfully");
     } catch (error: any) {
-      toast.error("Failed to save attendance");
-      console.error("Error:", error);
+      console.error("Error saving attendance:", error);
+      if (error.message.includes("Notes must be")) {
+        toast.error(error.message);
+      } else {
+        toast.error("Unable to save attendance. Please try again.");
+      }
     } finally {
       setSaving(false);
     }

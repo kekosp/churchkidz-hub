@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
+import { childSchema } from "@/lib/validation-schemas";
 
 interface Child {
   id: string;
@@ -85,8 +86,8 @@ const Children = () => {
       if (error) throw error;
       setChildren(data || []);
     } catch (error: any) {
-      toast.error("Failed to load children");
-      console.error("Error:", error);
+      console.error("Error loading children:", error);
+      toast.error("Unable to load children. Please refresh the page.");
     } finally {
       setLoading(false);
     }
@@ -96,6 +97,15 @@ const Children = () => {
     e.preventDefault();
 
     try {
+      // Validate input
+      const validation = childSchema.safeParse(formData);
+
+      if (!validation.success) {
+        const errors = validation.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
+        toast.error(errors);
+        return;
+      }
+
       if (editingChild) {
         const { error } = await supabase
           .from("children")
@@ -117,7 +127,8 @@ const Children = () => {
       resetForm();
       fetchChildren();
     } catch (error: any) {
-      toast.error(error.message || "Failed to save child");
+      console.error("Error saving child:", error);
+      toast.error("Unable to save child information. Please try again.");
     }
   };
 
@@ -134,7 +145,8 @@ const Children = () => {
       toast.success("Child deleted successfully");
       fetchChildren();
     } catch (error: any) {
-      toast.error("Failed to delete child");
+      console.error("Error deleting child:", error);
+      toast.error("Unable to delete child. Please try again.");
     }
   };
 
