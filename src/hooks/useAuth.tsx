@@ -49,12 +49,17 @@ export const useAuth = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
-        .maybeSingle() as any;
+        .single();
 
       if (error) {
-        console.error("Error fetching user role:", error);
+        if (error.code === 'PGRST116') {
+          // No role found - this is ok, user might not have a role yet
+          setUserRole(null);
+        } else {
+          console.error("Error fetching user role:", error);
+        }
       } else if (data) {
-        setUserRole(data.role);
+        setUserRole(data.role as "admin" | "servant" | "parent");
       }
     } catch (error) {
       console.error("Error in fetchUserRole:", error);
