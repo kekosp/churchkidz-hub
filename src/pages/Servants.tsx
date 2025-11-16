@@ -19,13 +19,15 @@ const Servants = () => {
       navigate("/auth");
       return;
     }
-    // Wait for userRole to load before checking access
-    if (!authLoading && user && userRole === null) {
-      return; // Still loading role
+    
+    // Wait for both auth AND role to finish loading
+    if (authLoading || userRole === null) {
+      return;
     }
-    if (user && (userRole === "admin" || userRole === "servant")) {
+    
+    if (userRole === "admin" || userRole === "servant") {
       fetchServants();
-    } else if (user && userRole !== "admin" && userRole !== "servant") {
+    } else {
       navigate("/dashboard");
     }
   }, [user, userRole, authLoading, navigate]);
