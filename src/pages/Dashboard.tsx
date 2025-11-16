@@ -32,6 +32,18 @@ const Dashboard = () => {
     return null;
   }
 
+  // Show loading state while role is being fetched
+  if (userRole === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-medium">Loading your permissions...</div>
+          <div className="text-sm text-muted-foreground mt-2">Please wait</div>
+        </div>
+      </div>
+    );
+  }
+
   const adminCards = [
     {
       title: "Manage Children",
