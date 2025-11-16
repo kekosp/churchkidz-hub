@@ -45,25 +45,35 @@ export const useAuth = () => {
 
   const fetchUserRole = async (userId: string) => {
     try {
+      console.log("🔍 Fetching role for user:", userId);
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .single();
 
+      console.log("📦 Role query result:", { data, error });
+
       if (error) {
         if (error.code === 'PGRST116') {
-          // No role found - this is ok, user might not have a role yet
+          console.log("ℹ️ No role found for user");
           setUserRole(null);
         } else {
-          console.error("Error fetching user role:", error);
+          console.error("❌ Error fetching user role:", error);
+          setUserRole(null);
         }
       } else if (data) {
+        console.log("✅ Setting userRole to:", data.role);
         setUserRole(data.role as "admin" | "servant" | "parent");
+      } else {
+        console.log("⚠️ No data returned");
+        setUserRole(null);
       }
     } catch (error) {
-      console.error("Error in fetchUserRole:", error);
+      console.error("💥 Exception in fetchUserRole:", error);
+      setUserRole(null);
     } finally {
+      console.log("🏁 Finished fetching role, setting loading to false");
       setLoading(false);
     }
   };

@@ -28,17 +28,23 @@ const ManageRoles = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("🔐 ManageRoles access check:", { user: user?.email, userRole, authLoading });
+    
     if (!authLoading && !user) {
+      console.log("❌ No user, redirecting to auth");
       navigate("/auth");
       return;
     }
     // Wait for userRole to load before checking access
     if (!authLoading && user && userRole === null) {
+      console.log("⏳ Still loading role, waiting...");
       return; // Still loading role
     }
     if (user && userRole === "admin") {
+      console.log("✅ Admin access granted, fetching users");
       fetchUsers();
     } else if (user && userRole !== "admin") {
+      console.log("🚫 Access denied. User role:", userRole);
       toast.error("Only administrators can manage roles");
       navigate("/dashboard");
     }
