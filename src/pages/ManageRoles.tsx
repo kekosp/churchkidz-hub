@@ -32,6 +32,10 @@ const ManageRoles = () => {
       navigate("/auth");
       return;
     }
+    // Wait for userRole to load before checking access
+    if (!authLoading && user && userRole === null) {
+      return; // Still loading role
+    }
     if (user && userRole === "admin") {
       fetchUsers();
     } else if (user && userRole !== "admin") {
