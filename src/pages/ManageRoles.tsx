@@ -35,15 +35,17 @@ const ManageRoles = () => {
       navigate("/auth");
       return;
     }
-    // Wait for userRole to load before checking access
-    if (!authLoading && user && userRole === null) {
-      console.log("⏳ Still loading role, waiting...");
-      return; // Still loading role
+    
+    // Wait for both auth AND role to finish loading
+    if (authLoading || userRole === null) {
+      console.log("⏳ Still loading (authLoading:", authLoading, "userRole:", userRole, ")");
+      return;
     }
-    if (user && userRole === "admin") {
+    
+    if (userRole === "admin") {
       console.log("✅ Admin access granted, fetching users");
       fetchUsers();
-    } else if (user && userRole !== "admin") {
+    } else {
       console.log("🚫 Access denied. User role:", userRole);
       toast.error("Only administrators can manage roles");
       navigate("/dashboard");
