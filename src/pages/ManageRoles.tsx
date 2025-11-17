@@ -28,25 +28,19 @@ const ManageRoles = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("🔐 ManageRoles access check:", { user: user?.email, userRole, authLoading });
-    
     if (!authLoading && !user) {
-      console.log("❌ No user, redirecting to auth");
       navigate("/auth");
       return;
     }
     
     // Wait for both auth AND role to finish loading
     if (authLoading || userRole === null) {
-      console.log("⏳ Still loading (authLoading:", authLoading, "userRole:", userRole, ")");
       return;
     }
     
     if (userRole === "admin") {
-      console.log("✅ Admin access granted, fetching users");
       fetchUsers();
     } else {
-      console.log("🚫 Access denied. User role:", userRole);
       toast.error("Only administrators can manage roles");
       navigate("/dashboard");
     }
@@ -93,7 +87,7 @@ const ManageRoles = () => {
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'servant' | 'parent' | 'none') => {
     try {
       if (newRole === 'none') {
-        // Delete the role
+        // Delete all roles for this user
         const { error } = await supabase
           .from("user_roles")
           .delete()
@@ -102,14 +96,17 @@ const ManageRoles = () => {
         if (error) throw error;
         toast.success("Role removed successfully");
       } else {
-        // Upsert the role
+        // First delete existing role, then insert new one
+        await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", userId);
+
         const { error } = await supabase
           .from("user_roles")
-          .upsert({
+          .insert({
             user_id: userId,
             role: newRole,
-          }, {
-            onConflict: "user_id,role"
           }) as any;
 
         if (error) throw error;
