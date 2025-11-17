@@ -21,7 +21,8 @@ export const signupSchema = z.object({
     .trim(),
   phone_number: z
     .string()
-    .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format (e.g., +1234567890)")
+    .min(1, "Phone number is required")
+    .max(20, "Phone number must be less than 20 characters")
     .optional()
     .or(z.literal("")),
 });
@@ -47,8 +48,8 @@ export const childSchema = z.object({
     .trim(),
   parent_phone: z
     .string()
-    .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format (e.g., +1234567890)")
-    .or(z.literal("")),
+    .min(1, "Phone number is required")
+    .max(20, "Phone number must be less than 20 characters"),
   address: z
     .string()
     .max(500, "Address must be less than 500 characters")
