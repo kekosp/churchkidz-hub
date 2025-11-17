@@ -106,10 +106,16 @@ const Children = () => {
         return;
       }
 
+      // Convert empty servant_id to null
+      const dataToSubmit = {
+        ...formData,
+        servant_id: formData.servant_id || null,
+      };
+
       if (editingChild) {
         const { error } = await supabase
           .from("children")
-          .update(formData)
+          .update(dataToSubmit)
           .eq("id", editingChild.id) as any;
 
         if (error) throw error;
@@ -117,7 +123,7 @@ const Children = () => {
       } else {
         const { error } = await supabase
           .from("children")
-          .insert([formData]) as any;
+          .insert([dataToSubmit]) as any;
 
         if (error) throw error;
         toast.success("Child added successfully");
