@@ -71,7 +71,9 @@ const Children = () => {
       if (error) throw error;
       setServants(data || []);
     } catch (error: any) {
-      console.error("Error fetching servants:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error fetching servants:", error);
+      }
     }
   };
 
@@ -86,7 +88,9 @@ const Children = () => {
       if (error) throw error;
       setChildren(data || []);
     } catch (error: any) {
-      console.error("Error loading children:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error loading children:", error);
+      }
       toast.error("Unable to load children. Please refresh the page.");
     } finally {
       setLoading(false);
@@ -133,7 +137,9 @@ const Children = () => {
       resetForm();
       fetchChildren();
     } catch (error: any) {
-      console.error("Error saving child:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error saving child:", error);
+      }
       toast.error("Unable to save child information. Please try again.");
     }
   };
@@ -151,7 +157,9 @@ const Children = () => {
       toast.success("Child deleted successfully");
       fetchChildren();
     } catch (error: any) {
-      console.error("Error deleting child:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error deleting child:", error);
+      }
       toast.error("Unable to delete child. Please try again.");
     }
   };

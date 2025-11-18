@@ -77,7 +77,9 @@ const ManageRoles = () => {
 
       setUsers(usersWithRoles);
     } catch (error: any) {
-      console.error("Error loading users:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error loading users:", error);
+      }
       toast.error("Unable to load users. Please refresh the page.");
     } finally {
       setLoading(false);
@@ -115,7 +117,9 @@ const ManageRoles = () => {
 
       fetchUsers();
     } catch (error: any) {
-      console.error("Error updating role:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error updating role:", error);
+      }
       toast.error("Unable to update role. Please try again.");
     }
   };

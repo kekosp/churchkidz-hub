@@ -55,7 +55,9 @@ export const useAuth = () => {
         if (error.code === 'PGRST116') {
           setUserRole(null);
         } else {
-          console.error("Error fetching user role:", error);
+          if (import.meta.env.DEV) {
+            console.error("Error fetching user role:", error);
+          }
           setUserRole(null);
         }
       } else if (data) {
@@ -64,7 +66,9 @@ export const useAuth = () => {
         setUserRole(null);
       }
     } catch (error) {
-      console.error("Exception in fetchUserRole:", error);
+      if (import.meta.env.DEV) {
+        console.error("Exception in fetchUserRole:", error);
+      }
       setUserRole(null);
     } finally {
       setLoading(false);

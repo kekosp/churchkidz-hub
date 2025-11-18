@@ -88,7 +88,9 @@ const Reports = () => {
       );
     } catch (error: any) {
       toast.error("Failed to load reports");
-      console.error("Error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error:", error);
+      }
     } finally {
       setLoading(false);
     }

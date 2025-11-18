@@ -44,7 +44,9 @@ const Servants = () => {
       setServants(data || []);
     } catch (error: any) {
       toast.error("Failed to load servants");
-      console.error("Error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error:", error);
+      }
     } finally {
       setLoading(false);
     }

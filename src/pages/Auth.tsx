@@ -54,7 +54,9 @@ const Auth = () => {
       });
 
       if (error) {
-        console.error("Login error:", error);
+        if (import.meta.env.DEV) {
+          console.error("Login error:", error);
+        }
         // Show user-friendly message based on error
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password");
@@ -69,7 +71,9 @@ const Auth = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      console.error("Unexpected login error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Unexpected login error:", error);
+      }
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -109,7 +113,9 @@ const Auth = () => {
       });
 
       if (error) {
-        console.error("Signup error:", error);
+        if (import.meta.env.DEV) {
+          console.error("Signup error:", error);
+        }
         // Show user-friendly message based on error
         if (error.message.includes("already registered")) {
           toast.error("This email is already registered. Please log in.");
@@ -127,7 +133,9 @@ const Auth = () => {
         setSignupPhone("");
       }
     } catch (error: any) {
-      console.error("Unexpected signup error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Unexpected signup error:", error);
+      }
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
