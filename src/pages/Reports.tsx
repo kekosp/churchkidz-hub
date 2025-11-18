@@ -19,7 +19,7 @@ interface ChildStats {
 
 const Reports = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ChildStats[]>([]);
   const [totalChildren, setTotalChildren] = useState(0);
@@ -39,25 +39,32 @@ const Reports = () => {
     try {
       setLoading(true);
 
-      // Fetch all children
+      // Fetch children based on user role (RLS will automatically filter)
       const { data: childrenData, error: childrenError } = await supabase
         .from("children")
-        .select("id, full_name") as any;
+        .select("id, full_name");
 
       if (childrenError) throw childrenError;
 
       setTotalChildren(childrenData?.length || 0);
 
-      // Fetch all attendance records
-      const { data: attendanceData, error: attendanceError } = await supabase
-        .from("attendance")
-        .select("child_id, present") as any;
+      // Fetch attendance records for the children the user can see
+      const childIds = (childrenData || []).map((child: any) => child.id);
+      
+      let attendanceData: any[] = [];
+      if (childIds.length > 0) {
+        const { data, error: attendanceError } = await supabase
+          .from("attendance")
+          .select("child_id, present")
+          .in("child_id", childIds);
 
-      if (attendanceError) throw attendanceError;
+        if (attendanceError) throw attendanceError;
+        attendanceData = data || [];
+      }
 
       // Calculate stats for each child
       const childStats: ChildStats[] = (childrenData || []).map((child: any) => {
-        const childAttendance = (attendanceData || []).filter(
+        const childAttendance = attendanceData.filter(
           (a: any) => a.child_id === child.id
         );
         const attended = childAttendance.filter((a: any) => a.present).length;
