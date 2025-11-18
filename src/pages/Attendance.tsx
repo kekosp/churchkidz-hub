@@ -71,7 +71,9 @@ const Attendance = () => {
       setAttendance(initialAttendance);
     } catch (error: any) {
       toast.error("Failed to load children");
-      console.error("Error:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error:", error);
+      }
     } finally {
       setLoading(false);
     }
@@ -98,7 +100,9 @@ const Attendance = () => {
         setAttendance((prev) => ({ ...prev, ...existingAttendance }));
       }
     } catch (error: any) {
-      console.error("Error fetching existing attendance:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error fetching existing attendance:", error);
+      }
     }
   };
 
@@ -156,7 +160,9 @@ const Attendance = () => {
 
       toast.success("Attendance saved successfully");
     } catch (error: any) {
-      console.error("Error saving attendance:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error saving attendance:", error);
+      }
       if (error.message.includes("Notes must be")) {
         toast.error(error.message);
       } else {
