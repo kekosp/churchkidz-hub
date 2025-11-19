@@ -82,6 +82,12 @@ const Dashboard = () => {
       href: "/reports",
     },
     {
+      title: "Absent Children",
+      description: "View absences and send WhatsApp notifications",
+      icon: Users,
+      href: "/absent-children",
+    },
+    {
       title: "Manage Roles",
       description: "Assign user roles and permissions",
       icon: Shield,

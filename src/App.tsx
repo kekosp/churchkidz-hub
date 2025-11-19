@@ -10,6 +10,7 @@ import Children from "./pages/Children";
 import Servants from "./pages/Servants";
 import Attendance from "./pages/Attendance";
 import Reports from "./pages/Reports";
+import AbsentChildren from "./pages/AbsentChildren";
 import ManageRoles from "./pages/ManageRoles";
 import QRCodes from "./pages/QRCodes";
 import QRScanner from "./pages/QRScanner";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/servants" element={<Servants />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/absent-children" element={<AbsentChildren />} />
           <Route path="/manage-roles" element={<ManageRoles />} />
           <Route path="/qr-codes" element={<QRCodes />} />
           <Route path="/qr-scanner" element={<QRScanner />} />
