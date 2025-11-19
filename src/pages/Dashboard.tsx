@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield } from "lucide-react";
+import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -64,6 +64,18 @@ const Dashboard = () => {
       href: "/attendance",
     },
     {
+      title: "QR Scanner",
+      description: "Scan QR codes for instant attendance",
+      icon: ScanLine,
+      href: "/qr-scanner",
+    },
+    {
+      title: "QR Codes",
+      description: "View and download children's QR codes",
+      icon: QrCode,
+      href: "/qr-codes",
+    },
+    {
       title: "Reports",
       description: "View statistics and analytics",
       icon: BarChart3,
@@ -91,6 +103,18 @@ const Dashboard = () => {
       href: "/attendance",
     },
     {
+      title: "QR Scanner",
+      description: "Scan QR codes for instant attendance",
+      icon: ScanLine,
+      href: "/qr-scanner",
+    },
+    {
+      title: "QR Codes",
+      description: "View and download children's QR codes",
+      icon: QrCode,
+      href: "/qr-codes",
+    },
+    {
       title: "Reports",
       description: "View attendance statistics",
       icon: BarChart3,
@@ -104,6 +128,12 @@ const Dashboard = () => {
       description: "View your child's information",
       icon: Users,
       href: "/children",
+    },
+    {
+      title: "QR Code",
+      description: "View your child's QR code",
+      icon: QrCode,
+      href: "/qr-codes",
     },
     {
       title: "Attendance History",
