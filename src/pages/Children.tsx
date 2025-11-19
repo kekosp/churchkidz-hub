@@ -110,11 +110,16 @@ const Children = () => {
         return;
       }
 
-      // Convert empty servant_id to null
-      const dataToSubmit = {
+      // Convert empty servant_id to null and set parent_id for parent users
+      const dataToSubmit: any = {
         ...formData,
         servant_id: formData.servant_id || null,
       };
+
+      // Automatically set parent_id for parent-role users when creating
+      if (!editingChild && userRole === "parent" && user) {
+        dataToSubmit.parent_id = user.id;
+      }
 
       if (editingChild) {
         const { error } = await supabase
