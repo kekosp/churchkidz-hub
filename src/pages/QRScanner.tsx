@@ -137,28 +137,36 @@ const QRScanner = () => {
     } catch (error) {
       console.error("Error starting scanner:", error);
       toast.error("Failed to start camera. Please check permissions.");
+      // Clear the scanner ref if start failed
+      scannerRef.current = null;
+      setScanning(false);
     }
   };
 
   const stopScanning = async () => {
-    if (scannerRef.current) {
+    if (scannerRef.current && scanning) {
       try {
         await scannerRef.current.stop();
-        scannerRef.current = null;
-        setScanning(false);
       } catch (error) {
         console.error("Error stopping scanner:", error);
+      } finally {
+        scannerRef.current = null;
+        setScanning(false);
       }
     }
   };
 
   useEffect(() => {
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(console.error);
+      // Only stop if scanner is actually running
+      if (scannerRef.current && scanning) {
+        scannerRef.current.stop().catch((error) => {
+          // Silently handle cleanup errors
+          console.debug("Scanner cleanup:", error);
+        });
       }
     };
-  }, []);
+  }, [scanning]);
 
   if (authLoading) {
     return (
