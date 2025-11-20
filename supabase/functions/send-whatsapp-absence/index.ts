@@ -110,7 +110,18 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Input validated successfully:', { childName: trimmedName, parentPhone, date });
 
     // Format phone number for WhatsApp (must include country code)
-    const formattedPhone = parentPhone.startsWith("+") ? parentPhone : `+${parentPhone}`;
+    // Handle Egyptian numbers that start with 0 (convert to +20)
+    let formattedPhone: string;
+    if (parentPhone.startsWith("+")) {
+      formattedPhone = parentPhone;
+    } else if (parentPhone.startsWith("0")) {
+      // Egyptian number - replace leading 0 with +20
+      formattedPhone = `+20${parentPhone.substring(1)}`;
+    } else {
+      formattedPhone = `+${parentPhone}`;
+    }
+    
+    console.log('Phone number formatted:', { original: parentPhone, formatted: formattedPhone });
     
     const message = `مرحباً، نود إعلامكم بأن ${trimmedName} لم يحضر/تحضر في ${date}. نرجو توضيح السبب إذا أمكن. شكراً لكم.`;
 
