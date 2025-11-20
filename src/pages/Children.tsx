@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Edit, Trash2, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
 import { childSchema } from "@/lib/validation-schemas";
+import * as XLSX from "xlsx";
 
 interface Child {
   id: string;
@@ -37,6 +38,13 @@ const Children = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
   const [servants, setServants] = useState<any[]>([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<{
+    success: number;
+    failed: number;
+    errors: string[];
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -101,7 +109,6 @@ const Children = () => {
     e.preventDefault();
 
     try {
-      // Validate input
       const validation = childSchema.safeParse(formData);
 
       if (!validation.success) {
@@ -110,13 +117,11 @@ const Children = () => {
         return;
       }
 
-      // Convert empty servant_id to null and set parent_id for parent users
       const dataToSubmit: any = {
         ...formData,
         servant_id: formData.servant_id || null,
       };
 
-      // Automatically set parent_id for parent-role users when creating
       if (!editingChild && userRole === "parent" && user) {
         dataToSubmit.parent_id = user.id;
       }
@@ -128,11 +133,11 @@ const Children = () => {
           .eq("id", editingChild.id) as any;
 
         if (error) throw error;
-        toast.success("Child updated successfully");
+        toast.success("Child information updated successfully");
       } else {
         const { error } = await supabase
           .from("children")
-          .insert([dataToSubmit]) as any;
+          .insert(dataToSubmit) as any;
 
         if (error) throw error;
         toast.success("Child added successfully");
@@ -169,6 +174,123 @@ const Children = () => {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResults(null);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      let successCount = 0;
+      let failedCount = 0;
+      const errors: string[] = [];
+
+      const { data: existingChildren } = await supabase
+        .from("children")
+        .select("full_name, date_of_birth, parent_phone");
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row: any = jsonData[i];
+        try {
+          const childData = {
+            full_name: row["Full Name"] || row["full_name"] || row["Name"] || "",
+            date_of_birth: row["Date of Birth"] || row["date_of_birth"] || row["DOB"] || "",
+            parent_name: row["Parent Name"] || row["parent_name"] || "",
+            parent_phone: row["Parent Phone"] || row["parent_phone"] || row["Phone"] || "",
+            address: row["Address"] || row["address"] || "",
+            school_grade: row["School Grade"] || row["school_grade"] || row["Grade"] || "",
+            attendance_status: row["Attendance Status"] || row["attendance_status"] || "Regular",
+            notes: row["Notes"] || row["notes"] || "",
+            servant_id: null,
+          };
+
+          const validation = childSchema.safeParse(childData);
+          if (!validation.success) {
+            const errorMsg = validation.error.errors.map((e) => e.message).join(", ");
+            errors.push(`Row ${i + 2}: ${errorMsg}`);
+            failedCount++;
+            continue;
+          }
+
+          const isDuplicate = existingChildren?.some(
+            (child) =>
+              child.full_name.toLowerCase() === childData.full_name.toLowerCase() &&
+              child.date_of_birth === childData.date_of_birth &&
+              child.parent_phone === childData.parent_phone
+          );
+
+          if (isDuplicate) {
+            errors.push(`Row ${i + 2}: Duplicate entry for ${childData.full_name}`);
+            failedCount++;
+            continue;
+          }
+
+          const dataToInsert: any = { ...childData };
+
+          if (userRole === "parent" && user) {
+            dataToInsert.parent_id = user.id;
+          }
+
+          const { error } = await supabase
+            .from("children")
+            .insert(dataToInsert);
+
+          if (error) throw error;
+
+          successCount++;
+        } catch (error: any) {
+          errors.push(`Row ${i + 2}: ${error.message}`);
+          failedCount++;
+        }
+      }
+
+      setImportResults({ success: successCount, failed: failedCount, errors });
+      
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} children`);
+        fetchChildren();
+      }
+      
+      if (failedCount > 0) {
+        toast.error(`Failed to import ${failedCount} children. Check the results for details.`);
+      }
+    } catch (error: any) {
+      toast.error("Failed to parse file. Please ensure it's a valid Excel or CSV file.");
+      if (import.meta.env.DEV) {
+        console.error("Import error:", error);
+      }
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        "Full Name": "John Doe",
+        "Date of Birth": "2015-05-15",
+        "Parent Name": "Jane Doe",
+        "Parent Phone": "1234567890",
+        "Address": "123 Main St",
+        "School Grade": "Grade 3",
+        "Attendance Status": "Regular",
+        "Notes": "Sample notes"
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Children");
+    XLSX.writeFile(wb, "children_import_template.xlsx");
+  };
+
   const resetForm = () => {
     setFormData({
       full_name: "",
@@ -200,6 +322,11 @@ const Children = () => {
     setIsDialogOpen(true);
   };
 
+  const handleAddNew = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -222,194 +349,274 @@ const Children = () => {
             <h1 className="text-3xl font-bold">Children Management</h1>
           </div>
           {canEdit && (
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Child
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingChild ? "Edit Child" : "Add New Child"}</DialogTitle>
-                  <DialogDescription>Enter the child's information below</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" /> Import from Excel
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) resetForm();
+              }}>
+                <DialogTrigger asChild>
+                  <Button onClick={handleAddNew}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Child
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingChild ? "Edit Child" : "Add New Child"}</DialogTitle>
+                    <DialogDescription>Enter the child's information below</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="full_name">Full Name *</Label>
+                        <Input
+                          id="full_name"
+                          value={formData.full_name}
+                          onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                        <Input
+                          id="date_of_birth"
+                          type="date"
+                          value={formData.date_of_birth}
+                          onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="parent_name">Parent Name *</Label>
+                        <Input
+                          id="parent_name"
+                          value={formData.parent_name}
+                          onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="parent_phone">Parent Phone *</Label>
+                        <Input
+                          id="parent_phone"
+                          type="tel"
+                          value={formData.parent_phone}
+                          onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="full_name">Full Name *</Label>
+                      <Label htmlFor="address">Address</Label>
                       <Input
-                        id="full_name"
-                        value={formData.full_name}
-                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                        required
+                        id="address"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       />
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="school_grade">School Grade</Label>
+                        <Input
+                          id="school_grade"
+                          value={formData.school_grade}
+                          onChange={(e) => setFormData({ ...formData, school_grade: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="attendance_status">Attendance Status</Label>
+                        <Select
+                          value={formData.attendance_status}
+                          onValueChange={(value) => setFormData({ ...formData, attendance_status: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Regular">Regular</SelectItem>
+                            <SelectItem value="Irregular">Irregular</SelectItem>
+                            <SelectItem value="New">New</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {userRole === "admin" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="servant_id">Assigned Servant</Label>
+                        <Select
+                          value={formData.servant_id}
+                          onValueChange={(value) => setFormData({ ...formData, servant_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a servant (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {servants.map((servant: any) => (
+                              <SelectItem key={servant.user_id} value={servant.user_id}>
+                                {servant.profiles?.full_name || "Unknown"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
-                      <Label htmlFor="date_of_birth">Date of Birth *</Label>
-                      <Input
-                        id="date_of_birth"
-                        type="date"
-                        value={formData.date_of_birth}
-                        onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                        required
+                      <Label htmlFor="notes">Notes</Label>
+                      <Textarea
+                        id="notes"
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        rows={3}
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_name">Parent/Guardian Name *</Label>
-                      <Input
-                        id="parent_name"
-                        value={formData.parent_name}
-                        onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
-                        required
-                      />
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit">
+                        {editingChild ? "Update" : "Add"} Child
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_phone">Parent Phone *</Label>
-                      <Input
-                        id="parent_phone"
-                        type="tel"
-                        value={formData.parent_phone}
-                        onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="school_grade">School Grade</Label>
-                      <Input
-                        id="school_grade"
-                        value={formData.school_grade}
-                        onChange={(e) => setFormData({ ...formData, school_grade: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="attendance_status">Attendance Status</Label>
-                      <Select
-                        value={formData.attendance_status}
-                        onValueChange={(value) => setFormData({ ...formData, attendance_status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Regular">Regular</SelectItem>
-                          <SelectItem value="Irregular">Irregular</SelectItem>
-                          <SelectItem value="Inactive">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {userRole === "admin" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="servant_id">Assigned Servant/Teacher</Label>
-                      <Select
-                        value={formData.servant_id || "unassigned"}
-                        onValueChange={(value) => setFormData({ ...formData, servant_id: value === "unassigned" ? "" : value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a servant" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="unassigned">None</SelectItem>
-                          {servants.map((servant: any) => (
-                            <SelectItem key={servant.user_id} value={servant.user_id}>
-                              {servant.profiles?.full_name || "Unknown"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {editingChild ? "Update" : "Add"} Child
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           )}
         </div>
 
+        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Import Children from Excel</DialogTitle>
+              <DialogDescription>
+                Upload an Excel file (.xlsx) or CSV file to import multiple children at once. 
+                The system will validate data and prevent duplicates.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={handleFileUpload}
+                  disabled={importing}
+                  className="cursor-pointer"
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  Supported formats: Excel (.xlsx, .xls) and CSV (.csv)
+                </p>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <Button variant="outline" onClick={downloadTemplate}>
+                  Download Template
+                </Button>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-sm mb-2">Required Columns:</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• <strong>Full Name</strong> (required)</li>
+                  <li>• <strong>Date of Birth</strong> (required, format: YYYY-MM-DD)</li>
+                  <li>• <strong>Parent Name</strong> (required)</li>
+                  <li>• <strong>Parent Phone</strong> (required, 10-15 digits)</li>
+                  <li>• <strong>Address</strong> (optional)</li>
+                  <li>• <strong>School Grade</strong> (optional)</li>
+                  <li>• <strong>Attendance Status</strong> (optional, default: "Regular")</li>
+                  <li>• <strong>Notes</strong> (optional)</li>
+                </ul>
+              </div>
+
+              {importing && (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="text-sm text-gray-600 mt-2">Importing children...</p>
+                </div>
+              )}
+
+              {importResults && (
+                <div className="space-y-3">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <p className="font-medium text-green-800">
+                      Successfully imported: {importResults.success} children
+                    </p>
+                  </div>
+                  
+                  {importResults.failed > 0 && (
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <p className="font-medium text-red-800 mb-2">
+                        Failed to import: {importResults.failed} children
+                      </p>
+                      <div className="max-h-40 overflow-y-auto space-y-1">
+                        {importResults.errors.map((error, idx) => (
+                          <p key={idx} className="text-sm text-red-600">
+                            {error}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={() => {
+                      setImportResults(null);
+                      setIsImportDialogOpen(false);
+                    }}
+                    className="w-full"
+                  >
+                    Close
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Card>
           <CardHeader>
-            <CardTitle>All Children</CardTitle>
-            <CardDescription>
-              {children.length} {children.length === 1 ? "child" : "children"} registered
-            </CardDescription>
+            <CardTitle>Children List</CardTitle>
+            <CardDescription>View and manage all children in the system</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Age</TableHead>
-                    <TableHead>Parent</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {children.length === 0 ? (
+            {children.length === 0 ? (
+              <p className="text-center py-8 text-gray-500">No children found. Add a child to get started.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No children found
-                      </TableCell>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Date of Birth</TableHead>
+                      <TableHead>Parent</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Grade</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    children.map((child) => (
+                  </TableHeader>
+                  <TableBody>
+                    {children.map((child) => (
                       <TableRow key={child.id}>
                         <TableCell className="font-medium">{child.full_name}</TableCell>
-                        <TableCell>{child.age}</TableCell>
+                        <TableCell>{child.date_of_birth}</TableCell>
                         <TableCell>{child.parent_name}</TableCell>
                         <TableCell>{child.parent_phone}</TableCell>
                         <TableCell>{child.school_grade || "-"}</TableCell>
                         <TableCell>
-                          <Badge
-                            variant={
-                              child.attendance_status === "Regular"
-                                ? "default"
-                                : child.attendance_status === "Irregular"
-                                ? "secondary"
-                                : "outline"
-                            }
-                          >
+                          <Badge variant={child.attendance_status === "Regular" ? "default" : "secondary"}>
                             {child.attendance_status}
                           </Badge>
                         </TableCell>
@@ -417,9 +624,8 @@ const Children = () => {
                           <div className="flex gap-2">
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="sm"
                               onClick={() => navigate(`/child-report/${child.id}`)}
-                              title="View Report"
                             >
                               <FileText className="h-4 w-4" />
                             </Button>
@@ -427,30 +633,28 @@ const Children = () => {
                               <>
                                 <Button
                                   variant="ghost"
-                                  size="icon"
+                                  size="sm"
                                   onClick={() => openEditDialog(child)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                {userRole === "admin" && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDelete(child.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(child.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
                               </>
                             )}
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
