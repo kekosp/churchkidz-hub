@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash2, FileText } from "lucide-react";
 import { childSchema } from "@/lib/validation-schemas";
 
 interface Child {
@@ -382,13 +382,13 @@ const Children = () => {
                     <TableHead>Phone</TableHead>
                     <TableHead>Grade</TableHead>
                     <TableHead>Status</TableHead>
-                    {canEdit && <TableHead>Actions</TableHead>}
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {children.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
                         No children found
                       </TableCell>
                     </TableRow>
@@ -413,28 +413,38 @@ const Children = () => {
                             {child.attendance_status}
                           </Badge>
                         </TableCell>
-                        {canEdit && (
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openEditDialog(child)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              {userRole === "admin" && (
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => navigate(`/child-report/${child.id}`)}
+                              title="View Report"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                            {canEdit && (
+                              <>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleDelete(child.id)}
+                                  onClick={() => openEditDialog(child)}
                                 >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                  <Edit className="h-4 w-4" />
                                 </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        )}
+                                {userRole === "admin" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDelete(child.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
