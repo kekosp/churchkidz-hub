@@ -17,7 +17,8 @@ interface AbsenceNotificationRequest {
 }
 
 // Input validation regex patterns
-const PHONE_REGEX = /^\+?[1-9]\d{9,14}$/;
+// Allow phone numbers starting with + or 0 (for local formats like Egyptian 01x numbers)
+const PHONE_REGEX = /^\+?[0-9]\d{9,14}$/;
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{4}$/;
 
 const handler = async (req: Request): Promise<Response> => {
