@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_WHATSAPP_NUMBER = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
+const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,35 +124,40 @@ const handler = async (req: Request): Promise<Response> => {
     
     const message = `مرحباً، نود إعلامكم بأن ${trimmedName} لم يحضر/تحضر في ${date}. نرجو توضيح السبب إذا أمكن. شكراً لكم.`;
 
-    // Send WhatsApp message via Twilio
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-    const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    // Send WhatsApp message via Meta's Cloud API (FREE)
+    const whatsappUrl = `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+    
+    const messagePayload = {
+      messaging_product: "whatsapp",
+      to: formattedPhone,
+      type: "text",
+      text: {
+        body: message
+      }
+    };
 
-    const formData = new URLSearchParams();
-    formData.append("From", `whatsapp:${TWILIO_WHATSAPP_NUMBER}`);
-    formData.append("To", `whatsapp:${formattedPhone}`);
-    formData.append("Body", message);
+    console.log('Sending WhatsApp message to:', formattedPhone);
 
-    const twilioResponse = await fetch(twilioUrl, {
+    const whatsappResponse = await fetch(whatsappUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+        "Content-Type": "application/json",
       },
-      body: formData.toString(),
+      body: JSON.stringify(messagePayload),
     });
 
-    if (!twilioResponse.ok) {
-      const errorText = await twilioResponse.text();
-      console.error("Twilio error:", errorText);
+    if (!whatsappResponse.ok) {
+      const errorText = await whatsappResponse.text();
+      console.error("WhatsApp Cloud API error:", errorText);
       throw new Error(`Failed to send WhatsApp message: ${errorText}`);
     }
 
-    const twilioData = await twilioResponse.json();
-    console.log("WhatsApp message sent successfully:", twilioData.sid);
+    const whatsappData = await whatsappResponse.json();
+    console.log("WhatsApp message sent successfully:", whatsappData);
 
     return new Response(
-      JSON.stringify({ success: true, messageId: twilioData.sid }),
+      JSON.stringify({ success: true, messageId: whatsappData.messages[0].id }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
