@@ -174,18 +174,44 @@ const Children = () => {
     }
   };
 
+  const sanitizeCell = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    const str = String(value).trim();
+    // Strip potential Excel formula prefixes to avoid formula injection when files are reopened
+    const noFormula = str.replace(/^[=+\-@]/, "");
+    // Enforce a reasonable max length to avoid huge cell payloads
+    return noFormula.slice(0, 255);
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Basic resource limits to prevent abuse and crashes
+    const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+    const MAX_ROWS = 1000;
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast.error("File too large. Maximum size is 5MB.");
+      e.target.value = "";
+      return;
+    }
 
     setImporting(true);
     setImportResults(null);
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
+      const workbook = XLSX.read(data, { cellFormula: false });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length > MAX_ROWS) {
+        toast.error(`Too many rows. Maximum is ${MAX_ROWS} rows per import.`);
+        setImporting(false);
+        e.target.value = "";
+        return;
+      }
 
       let successCount = 0;
       let failedCount = 0;
@@ -199,14 +225,14 @@ const Children = () => {
         const row: any = jsonData[i];
         try {
           const childData = {
-            full_name: row["Full Name"] || row["full_name"] || row["Name"] || "",
-            date_of_birth: row["Date of Birth"] || row["date_of_birth"] || row["DOB"] || "",
-            parent_name: row["Parent Name"] || row["parent_name"] || "",
-            parent_phone: row["Parent Phone"] || row["parent_phone"] || row["Phone"] || "",
-            address: row["Address"] || row["address"] || "",
-            school_grade: row["School Grade"] || row["school_grade"] || row["Grade"] || "",
-            attendance_status: row["Attendance Status"] || row["attendance_status"] || "Regular",
-            notes: row["Notes"] || row["notes"] || "",
+            full_name: sanitizeCell(row["Full Name"] || row["full_name"] || row["Name"] || ""),
+            date_of_birth: sanitizeCell(row["Date of Birth"] || row["date_of_birth"] || row["DOB"] || ""),
+            parent_name: sanitizeCell(row["Parent Name"] || row["parent_name"] || ""),
+            parent_phone: sanitizeCell(row["Parent Phone"] || row["parent_phone"] || row["Phone"] || ""),
+            address: sanitizeCell(row["Address"] || row["address"] || ""),
+            school_grade: sanitizeCell(row["School Grade"] || row["school_grade"] || row["Grade"] || ""),
+            attendance_status: sanitizeCell(row["Attendance Status"] || row["attendance_status"] || "Regular"),
+            notes: sanitizeCell(row["Notes"] || row["notes"] || ""),
             servant_id: null,
           };
 
@@ -270,7 +296,6 @@ const Children = () => {
       e.target.value = "";
     }
   };
-
   const downloadTemplate = () => {
     const template = [
       {
