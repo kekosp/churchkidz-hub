@@ -371,7 +371,9 @@ const Children = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            <h1 className="text-3xl font-bold">Children Management</h1>
+            <h1 className="text-3xl font-bold">
+              {userRole === "parent" ? "My Children" : "Children Management"}
+            </h1>
           </div>
           {canEdit && (
             <div className="flex gap-2">
@@ -520,6 +522,18 @@ const Children = () => {
             </div>
           )}
         </div>
+
+        {userRole === "parent" && (
+          <Card className="mb-6 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-lg">Welcome, Parent!</CardTitle>
+              <CardDescription>
+                Below you can view your children's information. Your children were automatically linked to your account based on your phone number.
+                If you don't see your child listed, please contact an administrator.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
 
         <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
