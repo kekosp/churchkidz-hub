@@ -4,6 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Html5Qrcode } from "html5-qrcode";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -21,8 +29,10 @@ const QRScanner = () => {
   const { user, userRole, loading: authLoading } = useAuth();
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingResult, setPendingResult] = useState<ScanResult | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const hasInitialized = useRef(false);
+  const isPausedRef = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -118,15 +128,20 @@ const QRScanner = () => {
           qrbox: { width: 250, height: 250 },
         },
         async (decodedText) => {
+          // Skip if already paused (waiting for confirmation)
+          if (isPausedRef.current) {
+            return;
+          }
+
+          // Pause scanning while processing
+          isPausedRef.current = true;
+
           // Process the scanned QR code
           const result = await recordAttendance(decodedText);
-          setScanResults((prev) => [result, ...prev]);
-
-          if (result.success) {
-            toast.success(`${result.childName} marked present!`);
-          } else {
-            toast.error(`${result.childName}: ${result.message}`);
-          }
+          
+          // Show confirmation dialog
+          setPendingResult(result);
+          setShowConfirmDialog(true);
         },
         (errorMessage) => {
           // Ignore scan errors (happens continuously while scanning)
@@ -152,8 +167,33 @@ const QRScanner = () => {
       } finally {
         scannerRef.current = null;
         setScanning(false);
+        isPausedRef.current = false;
       }
     }
+  };
+
+  const handleConfirmScan = () => {
+    if (pendingResult) {
+      setScanResults((prev) => [pendingResult, ...prev]);
+      
+      if (pendingResult.success) {
+        toast.success(`${pendingResult.childName} marked present!`);
+      } else {
+        toast.error(`${pendingResult.childName}: ${pendingResult.message}`);
+      }
+    }
+    
+    setShowConfirmDialog(false);
+    setPendingResult(null);
+    // Resume scanning
+    isPausedRef.current = false;
+  };
+
+  const handleCancelScan = () => {
+    setShowConfirmDialog(false);
+    setPendingResult(null);
+    // Resume scanning without recording
+    isPausedRef.current = false;
   };
 
   useEffect(() => {
@@ -177,16 +217,39 @@ const QRScanner = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/dashboard")}
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
+    <>
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingResult?.success ? "Confirm Attendance" : "Scan Result"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p className="font-semibold text-lg">{pendingResult?.childName}</p>
+              <p>{pendingResult?.message}</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={handleCancelScan}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmScan}>
+              {pendingResult?.success ? "Confirm" : "OK"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/dashboard")}
+            className="mb-6"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
 
         <h1 className="text-4xl font-bold mb-8 text-foreground">
           QR Code Scanner
@@ -258,6 +321,7 @@ const QRScanner = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
