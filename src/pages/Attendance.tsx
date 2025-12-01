@@ -192,7 +192,9 @@ const Attendance = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            <h1 className="text-3xl font-bold">Attendance Tracking</h1>
+            <h1 className="text-3xl font-bold">
+              {userRole === "parent" ? "My Child's Attendance" : "Attendance Tracking"}
+            </h1>
           </div>
           {canEdit && (
             <Button onClick={handleSave} disabled={saving}>
@@ -201,6 +203,17 @@ const Attendance = () => {
             </Button>
           )}
         </div>
+
+        {userRole === "parent" && (
+          <Card className="mb-6 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-lg">Attendance History</CardTitle>
+              <CardDescription>
+                View your child's attendance records below. Only admins and servants can record attendance.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
 
         <Card className="mb-6">
           <CardHeader>
