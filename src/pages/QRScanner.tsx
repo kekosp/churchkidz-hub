@@ -84,7 +84,7 @@ const QRScanner = () => {
         };
       }
 
-      // Record new attendance
+      // Record new attendance (no notes for QR scan)
       const { error: insertError } = await supabase
         .from("attendance")
         .insert({
@@ -92,7 +92,6 @@ const QRScanner = () => {
           service_date: today,
           present: true,
           recorded_by: user?.id,
-          notes: "Recorded via QR scan",
         });
 
       if (insertError) {
