@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, UserCheck, UserX } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { attendanceSchema } from "@/lib/validation-schemas";
 
 interface Child {
@@ -234,6 +235,51 @@ const Attendance = () => {
           </CardContent>
         </Card>
 
+        {/* Summary Cards */}
+        {children.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card className="border-green-500/30 bg-green-500/10">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <UserCheck className="h-8 w-8 text-green-600" />
+                  <div>
+                    <p className="text-2xl font-bold text-green-600">
+                      {Object.values(attendance).filter((a) => a.present).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Present</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-red-500/30 bg-red-500/10">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <UserX className="h-8 w-8 text-red-600" />
+                  <div>
+                    <p className="text-2xl font-bold text-red-600">
+                      {Object.values(attendance).filter((a) => !a.present).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Absent</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                    {children.length}
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{children.length}</p>
+                    <p className="text-sm text-muted-foreground">Total Children</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Children Attendance</CardTitle>
@@ -243,41 +289,54 @@ const Attendance = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {children.map((child) => (
-                <div
-                  key={child.id}
-                  className="flex items-start gap-4 rounded-lg border p-4 hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id={`present-${child.id}`}
-                      checked={attendance[child.id]?.present}
-                      onCheckedChange={(checked) =>
-                        handleAttendanceChange(child.id, "present", checked === true)
-                      }
-                      disabled={!canEdit}
-                    />
-                    <Label
-                      htmlFor={`present-${child.id}`}
-                      className="text-base font-medium cursor-pointer"
-                    >
-                      {child.full_name}
-                    </Label>
+              {children.map((child) => {
+                const isPresent = attendance[child.id]?.present;
+                return (
+                  <div
+                    key={child.id}
+                    className={`flex items-start gap-4 rounded-lg border p-4 transition-colors ${
+                      isPresent
+                        ? "border-green-500/30 bg-green-500/5 hover:bg-green-500/10"
+                        : "border-red-500/30 bg-red-500/5 hover:bg-red-500/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-[200px]">
+                      <Checkbox
+                        id={`present-${child.id}`}
+                        checked={isPresent}
+                        onCheckedChange={(checked) =>
+                          handleAttendanceChange(child.id, "present", checked === true)
+                        }
+                        disabled={!canEdit}
+                      />
+                      <Label
+                        htmlFor={`present-${child.id}`}
+                        className="text-base font-medium cursor-pointer"
+                      >
+                        {child.full_name}
+                      </Label>
+                      <Badge
+                        variant={isPresent ? "default" : "destructive"}
+                        className={isPresent ? "bg-green-600" : ""}
+                      >
+                        {isPresent ? "Present" : "Absent"}
+                      </Badge>
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder="Add notes (optional)"
+                        value={attendance[child.id]?.notes || ""}
+                        onChange={(e) =>
+                          handleAttendanceChange(child.id, "notes", e.target.value)
+                        }
+                        rows={2}
+                        disabled={!canEdit}
+                        className="text-sm"
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Add notes (optional)"
-                      value={attendance[child.id]?.notes || ""}
-                      onChange={(e) =>
-                        handleAttendanceChange(child.id, "notes", e.target.value)
-                      }
-                      rows={2}
-                      disabled={!canEdit}
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {children.length === 0 && (
                 <div className="text-center text-muted-foreground py-8">
                   No children found. Add children first to record attendance.
