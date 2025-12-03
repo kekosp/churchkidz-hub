@@ -20,6 +20,47 @@ interface AbsenceNotificationRequest {
 const PHONE_REGEX = /^\+?[0-9]\d{9,14}$/;
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{4}$/;
 
+// In-memory rate limiting (free solution)
+// Limits: 50 requests per user per hour
+const RATE_LIMIT_MAX = 50;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+interface RateLimitEntry {
+  count: number;
+  windowStart: number;
+}
+
+const rateLimitStore = new Map<string, RateLimitEntry>();
+
+function checkRateLimit(userId: string): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const entry = rateLimitStore.get(userId);
+  
+  // Clean up old entries periodically (every 100 checks)
+  if (rateLimitStore.size > 100) {
+    for (const [key, val] of rateLimitStore.entries()) {
+      if (now - val.windowStart > RATE_LIMIT_WINDOW_MS) {
+        rateLimitStore.delete(key);
+      }
+    }
+  }
+  
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    // New window
+    rateLimitStore.set(userId, { count: 1, windowStart: now });
+    return { allowed: true, remaining: RATE_LIMIT_MAX - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+  
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const resetIn = RATE_LIMIT_WINDOW_MS - (now - entry.windowStart);
+    return { allowed: false, remaining: 0, resetIn };
+  }
+  
+  entry.count++;
+  const resetIn = RATE_LIMIT_WINDOW_MS - (now - entry.windowStart);
+  return { allowed: true, remaining: RATE_LIMIT_MAX - entry.count, resetIn };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -53,6 +94,30 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check rate limit BEFORE role check to prevent enumeration attacks
+    const rateLimit = checkRateLimit(user.id);
+    if (!rateLimit.allowed) {
+      console.warn('Rate limit exceeded for user:', user.id);
+      const resetMinutes = Math.ceil(rateLimit.resetIn / 60000);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded', 
+          message: `Too many requests. Please try again in ${resetMinutes} minutes.`,
+          retryAfter: Math.ceil(rateLimit.resetIn / 1000)
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(Math.ceil(rateLimit.resetIn / 1000)),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Math.ceil((Date.now() + rateLimit.resetIn) / 1000))
+          } 
+        }
+      );
+    }
+
     // Check role - only admin and servant can send WhatsApp messages
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
@@ -68,7 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('User authorized:', user.id, roleData.role);
+    console.log('User authorized:', user.id, roleData.role, `(${rateLimit.remaining} requests remaining)`);
 
     // Parse and validate input
     const body: AbsenceNotificationRequest = await req.json();
@@ -157,10 +222,21 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("WhatsApp message sent successfully:", whatsappData);
 
     return new Response(
-      JSON.stringify({ success: true, messageId: whatsappData.messages[0].id }),
+      JSON.stringify({ 
+        success: true, 
+        messageId: whatsappData.messages[0].id,
+        rateLimit: {
+          remaining: rateLimit.remaining,
+          resetIn: Math.ceil(rateLimit.resetIn / 1000)
+        }
+      }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { 
+          "Content-Type": "application/json", 
+          ...corsHeaders,
+          'X-RateLimit-Remaining': String(rateLimit.remaining),
+        },
       }
     );
   } catch (error: any) {
