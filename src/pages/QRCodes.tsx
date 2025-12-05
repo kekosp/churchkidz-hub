@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QRCodeSVG } from "qrcode.react";
 import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Child {
   id: string;
@@ -18,6 +19,7 @@ interface Child {
 const QRCodes = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,15 +44,11 @@ const QRCodes = () => {
         .select("id, full_name, parent_name, school_grade")
         .order("full_name");
 
-      // Parents only see their own children
       if (userRole === "parent") {
         query = query.eq("parent_id", user?.id);
-      }
-      // Servants see assigned children
-      else if (userRole === "servant") {
+      } else if (userRole === "servant") {
         query = query.eq("servant_id", user?.id);
       }
-      // Admins see all children (no filter)
 
       const { data, error } = await query;
 
@@ -96,7 +94,7 @@ const QRCodes = () => {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -107,19 +105,19 @@ const QRCodes = () => {
         <Button
           variant="ghost"
           onClick={() => navigate("/dashboard")}
-          className="mb-6"
+          className="mb-6 gap-2"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
+          <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+          {t('common.back')}
         </Button>
 
-        <h1 className="text-4xl font-bold mb-8 text-foreground">QR Codes</h1>
+        <h1 className="text-4xl font-bold mb-8 text-foreground">{t('qr.title')}</h1>
 
         {children.length === 0 ? (
           <Card>
             <CardContent className="py-8">
               <p className="text-center text-muted-foreground">
-                No children found
+                {t('children.noChildren')}
               </p>
             </CardContent>
           </Card>
@@ -130,11 +128,11 @@ const QRCodes = () => {
                 <CardHeader>
                   <CardTitle className="text-lg">{child.full_name}</CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Parent: {child.parent_name}
+                    {t('children.parentName')}: {child.parent_name}
                   </p>
                   {child.school_grade && (
                     <p className="text-sm text-muted-foreground">
-                      Grade: {child.school_grade}
+                      {t('children.schoolGrade')}: {child.school_grade}
                     </p>
                   )}
                 </CardHeader>
@@ -152,10 +150,10 @@ const QRCodes = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => downloadQRCode(child.id, child.full_name)}
-                    className="w-full"
+                    className="w-full gap-2"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download QR Code
+                    <Download className="h-4 w-4" />
+                    {t('qr.download')}
                   </Button>
                 </CardContent>
               </Card>

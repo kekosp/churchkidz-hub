@@ -4,10 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, userRole, loading, signOut } = useAuth();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,7 +26,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -34,50 +37,50 @@ const Dashboard = () => {
 
   const adminCards = [
     {
-      title: "Manage Children",
-      description: "Add, edit, and view all children",
+      title: t('dashboard.manageChildren'),
+      description: t('dashboard.manageChildrenDesc'),
       icon: Users,
       href: "/children",
     },
     {
-      title: "Manage Servants",
-      description: "Manage teachers and group assignments",
+      title: t('dashboard.manageServants'),
+      description: t('dashboard.manageServantsDesc'),
       icon: UserCheck,
       href: "/servants",
     },
     {
-      title: "Attendance",
-      description: "Record and track attendance",
+      title: t('dashboard.recordAttendance'),
+      description: t('dashboard.recordAttendanceDesc'),
       icon: ClipboardList,
       href: "/attendance",
     },
     {
-      title: "QR Scanner",
-      description: "Scan QR codes for instant attendance",
+      title: t('dashboard.scanQR'),
+      description: t('dashboard.scanQRDesc'),
       icon: ScanLine,
       href: "/qr-scanner",
     },
     {
-      title: "QR Codes",
-      description: "View and download children's QR codes",
+      title: t('dashboard.qrCodes'),
+      description: t('dashboard.qrCodesDesc'),
       icon: QrCode,
       href: "/qr-codes",
     },
     {
-      title: "Reports",
-      description: "View statistics and analytics",
+      title: t('dashboard.viewReports'),
+      description: t('dashboard.viewReportsDesc'),
       icon: BarChart3,
       href: "/reports",
     },
     {
-      title: "Absent Children",
-      description: "View absences and send WhatsApp notifications",
+      title: t('dashboard.absentChildren'),
+      description: t('dashboard.absentChildrenDesc'),
       icon: Users,
       href: "/absent-children",
     },
     {
-      title: "Manage Roles",
-      description: "Assign user roles and permissions",
+      title: t('dashboard.manageRoles'),
+      description: t('dashboard.manageRolesDesc'),
       icon: Shield,
       href: "/manage-roles",
     },
@@ -85,32 +88,32 @@ const Dashboard = () => {
 
   const servantCards = [
     {
-      title: "My Children",
-      description: "View and manage assigned children",
+      title: t('dashboard.myChildren'),
+      description: t('dashboard.myChildrenDesc'),
       icon: Users,
       href: "/children",
     },
     {
-      title: "Attendance",
-      description: "Record attendance for your group",
+      title: t('dashboard.recordAttendance'),
+      description: t('dashboard.recordAttendanceDesc'),
       icon: ClipboardList,
       href: "/attendance",
     },
     {
-      title: "QR Scanner",
-      description: "Scan QR codes for instant attendance",
+      title: t('dashboard.scanQR'),
+      description: t('dashboard.scanQRDesc'),
       icon: ScanLine,
       href: "/qr-scanner",
     },
     {
-      title: "QR Codes",
-      description: "View and download children's QR codes",
+      title: t('dashboard.qrCodes'),
+      description: t('dashboard.qrCodesDesc'),
       icon: QrCode,
       href: "/qr-codes",
     },
     {
-      title: "Reports",
-      description: "View attendance statistics",
+      title: t('dashboard.viewReports'),
+      description: t('dashboard.viewReportsDesc'),
       icon: BarChart3,
       href: "/reports",
     },
@@ -118,20 +121,20 @@ const Dashboard = () => {
 
   const parentCards = [
     {
-      title: "My Child",
-      description: "View your child's information",
+      title: t('dashboard.myChildren'),
+      description: t('dashboard.myChildrenDesc'),
       icon: Users,
       href: "/children",
     },
     {
-      title: "QR Code",
-      description: "View your child's QR code",
+      title: t('dashboard.qrCodes'),
+      description: t('dashboard.qrCodesDesc'),
       icon: QrCode,
       href: "/qr-codes",
     },
     {
-      title: "Attendance History",
-      description: "View attendance records",
+      title: t('dashboard.attendanceHistory'),
+      description: t('dashboard.attendanceHistoryDesc'),
       icon: ClipboardList,
       href: "/attendance",
     },
@@ -139,26 +142,35 @@ const Dashboard = () => {
 
   const cards = userRole === "admin" ? adminCards : userRole === "servant" ? servantCards : parentCards;
 
+  const roleTranslations: Record<string, string> = {
+    admin: t('roles.admin'),
+    servant: t('roles.servant'),
+    parent: t('roles.parent'),
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold">Church Kids Management</h1>
+            <h1 className="text-4xl font-bold">{t('app.title')}</h1>
             <p className="text-muted-foreground mt-2">
-              Welcome back! {userRole && `You are logged in as ${userRole}.`}
+              {t('dashboard.welcome')}! {userRole && `${roleTranslations[userRole] || userRole}`}
             </p>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
+          <div className="flex gap-2">
+            <LanguageSwitcher />
+            <Button variant="outline" onClick={handleSignOut} className="gap-2">
+              <LogOut className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+              {t('auth.signout')}
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {cards.map((card) => (
+          {cards.map((card, index) => (
             <Card
-              key={card.title}
+              key={index}
               className="cursor-pointer transition-all hover:shadow-lg hover:scale-105"
               onClick={() => navigate(card.href)}
             >
@@ -180,10 +192,7 @@ const Dashboard = () => {
         {!userRole && (
           <Card className="mt-6 border-warning">
             <CardHeader>
-              <CardTitle className="text-warning">No Role Assigned</CardTitle>
-              <CardDescription>
-                Please contact an administrator to assign you a role (Admin, Servant, or Parent).
-              </CardDescription>
+              <CardTitle className="text-warning">{t('dashboard.noRole')}</CardTitle>
             </CardHeader>
           </Card>
         )}

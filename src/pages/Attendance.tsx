@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, UserCheck, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { attendanceSchema } from "@/lib/validation-schemas";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Child {
   id: string;
@@ -27,6 +28,7 @@ interface AttendanceRecord {
 const Attendance = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceDate, setServiceDate] = useState(new Date().toISOString().split("T")[0]);
@@ -60,7 +62,6 @@ const Attendance = () => {
       if (error) throw error;
       setChildren(data || []);
       
-      // Initialize attendance state
       const initialAttendance: Record<string, AttendanceRecord> = {};
       (data || []).forEach((child: Child) => {
         initialAttendance[child.id] = {
@@ -123,10 +124,9 @@ const Attendance = () => {
     try {
       setSaving(true);
 
-      // Validate service date
       const validation = attendanceSchema.safeParse({
         service_date: serviceDate,
-        notes: "", // We validate individual notes below
+        notes: "",
       });
 
       if (!validation.success) {
@@ -136,7 +136,6 @@ const Attendance = () => {
         return;
       }
 
-      // Validate each attendance record's notes
       const records = Object.values(attendance).map((record) => {
         const noteValidation = attendanceSchema.shape.notes.safeParse(record.notes);
         if (!noteValidation.success) {
@@ -177,7 +176,7 @@ const Attendance = () => {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -189,18 +188,18 @@ const Attendance = () => {
       <div className="container mx-auto p-6">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+            <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
+              <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+              {t('common.back')}
             </Button>
             <h1 className="text-3xl font-bold">
-              {userRole === "parent" ? "My Child's Attendance" : "Attendance Tracking"}
+              {userRole === "parent" ? t('dashboard.attendanceHistory') : t('attendance.title')}
             </h1>
           </div>
           {canEdit && (
-            <Button onClick={handleSave} disabled={saving}>
-              <Save className="mr-2 h-4 w-4" />
-              {saving ? "Saving..." : "Save Attendance"}
+            <Button onClick={handleSave} disabled={saving} className="gap-2">
+              <Save className="h-4 w-4" />
+              {saving ? t('common.loading') : t('common.save')}
             </Button>
           )}
         </div>
@@ -208,9 +207,9 @@ const Attendance = () => {
         {userRole === "parent" && (
           <Card className="mb-6 border-primary/20 bg-primary/5">
             <CardHeader>
-              <CardTitle className="text-lg">Attendance History</CardTitle>
+              <CardTitle className="text-lg">{t('dashboard.attendanceHistory')}</CardTitle>
               <CardDescription>
-                View your child's attendance records below. Only admins and servants can record attendance.
+                {t('dashboard.attendanceHistoryDesc')}
               </CardDescription>
             </CardHeader>
           </Card>
@@ -218,24 +217,23 @@ const Attendance = () => {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Service Date</CardTitle>
-            <CardDescription>Select the date for attendance recording</CardDescription>
+            <CardTitle>{t('attendance.selectDate')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="max-w-xs">
-              <Label htmlFor="service_date">Date</Label>
+              <Label htmlFor="service_date">{t('common.date')}</Label>
               <Input
                 id="service_date"
                 type="date"
                 value={serviceDate}
                 onChange={(e) => setServiceDate(e.target.value)}
                 disabled={!canEdit}
+                dir="ltr"
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Summary Cards */}
         {children.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="border-green-500/30 bg-green-500/10">
@@ -246,7 +244,7 @@ const Attendance = () => {
                     <p className="text-2xl font-bold text-green-600">
                       {Object.values(attendance).filter((a) => a.present).length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Present</p>
+                    <p className="text-sm text-muted-foreground">{t('common.present')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -259,7 +257,7 @@ const Attendance = () => {
                     <p className="text-2xl font-bold text-red-600">
                       {Object.values(attendance).filter((a) => !a.present).length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Absent</p>
+                    <p className="text-sm text-muted-foreground">{t('common.absent')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -272,7 +270,7 @@ const Attendance = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{children.length}</p>
-                    <p className="text-sm text-muted-foreground">Total Children</p>
+                    <p className="text-sm text-muted-foreground">{t('landing.childrenManagement')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -282,9 +280,9 @@ const Attendance = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Children Attendance</CardTitle>
+            <CardTitle>{t('attendance.title')}</CardTitle>
             <CardDescription>
-              Mark attendance for {children.length} {children.length === 1 ? "child" : "children"}
+              {children.length} {t('landing.childrenManagement')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -319,12 +317,12 @@ const Attendance = () => {
                         variant={isPresent ? "default" : "destructive"}
                         className={isPresent ? "bg-green-600" : ""}
                       >
-                        {isPresent ? "Present" : "Absent"}
+                        {isPresent ? t('common.present') : t('common.absent')}
                       </Badge>
                     </div>
                     <div className="flex-1">
                       <Textarea
-                        placeholder="Add notes (optional)"
+                        placeholder={t('common.notes')}
                         value={attendance[child.id]?.notes || ""}
                         onChange={(e) =>
                           handleAttendanceChange(child.id, "notes", e.target.value)
@@ -339,7 +337,7 @@ const Attendance = () => {
               })}
               {children.length === 0 && (
                 <div className="text-center text-muted-foreground py-8">
-                  No children found. Add children first to record attendance.
+                  {t('children.noChildren')}
                 </div>
               )}
             </div>

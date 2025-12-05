@@ -16,6 +16,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ScanResult {
   childName: string;
@@ -27,6 +28,7 @@ interface ScanResult {
 const QRScanner = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -40,7 +42,6 @@ const QRScanner = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Only admins and servants can scan
   useEffect(() => {
     if (!authLoading && userRole && userRole === "parent") {
       toast.error("Only servants and admins can scan QR codes");
@@ -50,7 +51,6 @@ const QRScanner = () => {
 
   const recordAttendance = async (childId: string) => {
     try {
-      // First, get child information
       const { data: childData, error: childError } = await supabase
         .from("children")
         .select("full_name")
@@ -63,7 +63,6 @@ const QRScanner = () => {
 
       const today = format(new Date(), "yyyy-MM-dd");
 
-      // Check if attendance already recorded today
       const { data: existingAttendance, error: checkError } = await supabase
         .from("attendance")
         .select("id")
@@ -79,12 +78,11 @@ const QRScanner = () => {
         return {
           childName: childData.full_name,
           success: false,
-          message: "Already marked present today",
+          message: t('attendance.alreadyRecorded'),
           timestamp: new Date(),
         };
       }
 
-      // Record new attendance (no notes for QR scan)
       const { error: insertError } = await supabase
         .from("attendance")
         .insert({
@@ -101,7 +99,7 @@ const QRScanner = () => {
       return {
         childName: childData.full_name,
         success: true,
-        message: "Attendance recorded successfully",
+        message: t('qr.scanSuccess'),
         timestamp: new Date(),
       };
     } catch (error) {
@@ -109,7 +107,7 @@ const QRScanner = () => {
       return {
         childName: "Unknown",
         success: false,
-        message: "Failed to record attendance",
+        message: t('qr.scanError'),
         timestamp: new Date(),
       };
     }
@@ -127,23 +125,17 @@ const QRScanner = () => {
           qrbox: { width: 250, height: 250 },
         },
         async (decodedText) => {
-          // Skip if already paused (waiting for confirmation)
           if (isPausedRef.current) {
             return;
           }
 
-          // Pause scanning while processing
           isPausedRef.current = true;
-
-          // Process the scanned QR code
           const result = await recordAttendance(decodedText);
-          
-          // Show confirmation dialog
           setPendingResult(result);
           setShowConfirmDialog(true);
         },
         (errorMessage) => {
-          // Ignore scan errors (happens continuously while scanning)
+          // Ignore scan errors
         }
       );
 
@@ -151,7 +143,6 @@ const QRScanner = () => {
     } catch (error) {
       console.error("Error starting scanner:", error);
       toast.error("Failed to start camera. Please check permissions.");
-      // Clear the scanner ref if start failed
       scannerRef.current = null;
       setScanning(false);
     }
@@ -176,7 +167,7 @@ const QRScanner = () => {
       setScanResults((prev) => [pendingResult, ...prev]);
       
       if (pendingResult.success) {
-        toast.success(`${pendingResult.childName} marked present!`);
+        toast.success(`${pendingResult.childName} - ${t('common.present')}!`);
       } else {
         toast.error(`${pendingResult.childName}: ${pendingResult.message}`);
       }
@@ -184,23 +175,19 @@ const QRScanner = () => {
     
     setShowConfirmDialog(false);
     setPendingResult(null);
-    // Resume scanning
     isPausedRef.current = false;
   };
 
   const handleCancelScan = () => {
     setShowConfirmDialog(false);
     setPendingResult(null);
-    // Resume scanning without recording
     isPausedRef.current = false;
   };
 
   useEffect(() => {
     return () => {
-      // Only stop if scanner is actually running
       if (scannerRef.current && scanning) {
         scannerRef.current.stop().catch((error) => {
-          // Silently handle cleanup errors
           console.debug("Scanner cleanup:", error);
         });
       }
@@ -210,7 +197,7 @@ const QRScanner = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -221,19 +208,19 @@ const QRScanner = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {pendingResult?.success ? "Confirm Attendance" : "Scan Result"}
+              {pendingResult?.success ? t('attendance.markPresent') : t('qr.scanError')}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p className="font-semibold text-lg">{pendingResult?.childName}</p>
               <p>{pendingResult?.message}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className={isRTL ? 'flex-row-reverse' : ''}>
             <Button variant="outline" onClick={handleCancelScan}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleConfirmScan}>
-              {pendingResult?.success ? "Confirm" : "OK"}
+              {pendingResult?.success ? t('common.save') : t('common.yes')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -244,82 +231,82 @@ const QRScanner = () => {
           <Button
             variant="ghost"
             onClick={() => navigate("/dashboard")}
-            className="mb-6"
+            className="mb-6 gap-2"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+            {t('common.back')}
           </Button>
 
-        <h1 className="text-4xl font-bold mb-8 text-foreground">
-          QR Code Scanner
-        </h1>
+          <h1 className="text-4xl font-bold mb-8 text-foreground">
+            {t('qr.scanTitle')}
+          </h1>
 
-        <div className="grid gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Scan QR Code</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div
-                id="qr-reader"
-                className="w-full max-w-md mx-auto mb-4"
-              ></div>
-              
-              <div className="flex justify-center gap-4">
-                {!scanning ? (
-                  <Button onClick={startScanning} size="lg">
-                    Start Scanning
-                  </Button>
-                ) : (
-                  <Button onClick={stopScanning} variant="destructive" size="lg">
-                    Stop Scanning
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {scanResults.length > 0 && (
+          <div className="grid gap-6 mb-8">
             <Card>
               <CardHeader>
-                <CardTitle>Scan Results</CardTitle>
+                <CardTitle>{t('qr.scanInstructions')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {scanResults.map((result, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-start gap-3 p-3 rounded-lg border ${
-                        result.success
-                          ? "border-green-500/20 bg-green-500/5"
-                          : "border-red-500/20 bg-red-500/5"
-                      }`}
-                    >
-                      {result.success ? (
-                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground">
-                          {result.childName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {result.message}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(result.timestamp, "h:mm:ss a")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <div
+                  id="qr-reader"
+                  className="w-full max-w-md mx-auto mb-4"
+                ></div>
+                
+                <div className="flex justify-center gap-4">
+                  {!scanning ? (
+                    <Button onClick={startScanning} size="lg">
+                      {t('qr.scanTitle')}
+                    </Button>
+                  ) : (
+                    <Button onClick={stopScanning} variant="destructive" size="lg">
+                      {t('common.cancel')}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          )}
+
+            {scanResults.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('reports.title')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {scanResults.map((result, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-start gap-3 p-3 rounded-lg border ${
+                          result.success
+                            ? "border-green-500/20 bg-green-500/5"
+                            : "border-red-500/20 bg-red-500/5"
+                        }`}
+                      >
+                        {result.success ? (
+                          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground">
+                            {result.childName}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {result.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(result.timestamp, "h:mm:ss a")}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };
