@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Servants = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [servants, setServants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +22,6 @@ const Servants = () => {
       return;
     }
     
-    // Wait for both auth AND role to finish loading
     if (authLoading || userRole === null) {
       return;
     }
@@ -55,7 +56,7 @@ const Servants = () => {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -64,42 +65,42 @@ const Servants = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
         <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
+            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+            {t('common.back')}
           </Button>
-          <h1 className="text-3xl font-bold">Servants Management</h1>
+          <h1 className="text-3xl font-bold">{t('servants.title')}</h1>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>All Servants</CardTitle>
+            <CardTitle>{t('servants.title')}</CardTitle>
             <CardDescription>
-              {servants.length} {servants.length === 1 ? "servant" : "servants"} registered
+              {servants.length} {t('roles.servant')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead>{t('common.email')}</TableHead>
+                  <TableHead>{t('common.phone')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {servants.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center text-muted-foreground">
-                      No servants found
+                      {t('servants.noServants')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   servants.map((servant) => (
                     <TableRow key={servant.user_id}>
                       <TableCell className="font-medium">{servant.profiles?.full_name}</TableCell>
-                      <TableCell>{servant.profiles?.email}</TableCell>
-                      <TableCell>{servant.profiles?.phone_number || "-"}</TableCell>
+                      <TableCell dir="ltr">{servant.profiles?.email}</TableCell>
+                      <TableCell dir="ltr">{servant.profiles?.phone_number || "-"}</TableCell>
                     </TableRow>
                   ))
                 )}

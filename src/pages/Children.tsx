@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
 import { childSchema } from "@/lib/validation-schemas";
 import * as XLSX from "xlsx";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Child {
   id: string;
@@ -33,6 +34,7 @@ interface Child {
 const Children = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -355,7 +357,7 @@ const Children = () => {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -367,27 +369,27 @@ const Children = () => {
       <div className="container mx-auto p-6">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+            <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
+              <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+              {t('common.back')}
             </Button>
             <h1 className="text-3xl font-bold">
-              {userRole === "parent" ? "My Children" : "Children Management"}
+              {userRole === "parent" ? t('dashboard.myChildren') : t('children.title')}
             </h1>
           </div>
           {canEdit && (
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
-                <Upload className="mr-2 h-4 w-4" /> Import from Excel
+              <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="gap-2">
+                <Upload className="h-4 w-4" /> {t('common.export')}
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button onClick={handleAddNew}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Child
+                  <Button onClick={handleAddNew} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    {t('children.addNew')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
