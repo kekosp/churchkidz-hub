@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Shield } from "lucide-react";
 import { Database } from "@/lib/supabase-types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type UserRole = Database['public']['Tables']['user_roles']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -24,6 +25,7 @@ interface UserWithRole {
 const ManageRoles = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +35,6 @@ const ManageRoles = () => {
       return;
     }
     
-    // Wait for both auth AND role to finish loading
     if (authLoading || userRole === null) {
       return;
     }
@@ -41,7 +42,7 @@ const ManageRoles = () => {
     if (userRole === "admin") {
       fetchUsers();
     } else {
-      toast.error("Only administrators can manage roles");
+      toast.error(t('manageRoles.adminOnly'));
       navigate("/dashboard");
     }
   }, [user, userRole, authLoading, navigate]);
@@ -50,28 +51,25 @@ const ManageRoles = () => {
     try {
       setLoading(true);
       
-      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*") as { data: Profile[] | null; error: any };
 
       if (profilesError) throw profilesError;
 
-      // Fetch all user roles
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("*") as { data: UserRole[] | null; error: any };
 
       if (rolesError) throw rolesError;
 
-      // Combine the data
       const usersWithRoles: UserWithRole[] = (profiles || []).map((profile) => {
-        const userRole = (roles || []).find((r) => r.user_id === profile.id);
+        const userRoleData = (roles || []).find((r) => r.user_id === profile.id);
         return {
           id: profile.id,
           full_name: profile.full_name,
           email: profile.email,
-          role: userRole?.role || null,
+          role: userRoleData?.role || null,
         };
       });
 
@@ -80,7 +78,7 @@ const ManageRoles = () => {
       if (import.meta.env.DEV) {
         console.error("Error loading users:", error);
       }
-      toast.error("Unable to load users. Please refresh the page.");
+      toast.error(t('manageRoles.loadError'));
     } finally {
       setLoading(false);
     }
@@ -89,16 +87,14 @@ const ManageRoles = () => {
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'servant' | 'parent' | 'none') => {
     try {
       if (newRole === 'none') {
-        // Delete all roles for this user
         const { error } = await supabase
           .from("user_roles")
           .delete()
           .eq("user_id", userId) as any;
 
         if (error) throw error;
-        toast.success("Role removed successfully");
+        toast.success(t('manageRoles.roleRemoved'));
       } else {
-        // First delete existing role, then insert new one
         await supabase
           .from("user_roles")
           .delete()
@@ -112,7 +108,7 @@ const ManageRoles = () => {
           }) as any;
 
         if (error) throw error;
-        toast.success("Role updated successfully");
+        toast.success(t('manageRoles.roleUpdated'));
       }
 
       fetchUsers();
@@ -120,14 +116,23 @@ const ManageRoles = () => {
       if (import.meta.env.DEV) {
         console.error("Error updating role:", error);
       }
-      toast.error("Unable to update role. Please try again.");
+      toast.error(t('manageRoles.updateError'));
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin': return t('roles.admin');
+      case 'servant': return t('roles.servant');
+      case 'parent': return t('roles.parent');
+      default: return role;
     }
   };
 
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -136,54 +141,52 @@ const ManageRoles = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
         <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
+            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+            {t('common.back')}
           </Button>
           <div className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Manage User Roles</h1>
+            <h1 className="text-3xl font-bold">{t('manageRoles.title')}</h1>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>User Roles</CardTitle>
-            <CardDescription>
-              Assign roles to users to control their access level
-            </CardDescription>
+            <CardTitle>{t('roles.title')}</CardTitle>
+            <CardDescription>{t('manageRoles.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4 rounded-lg bg-muted p-4">
-              <h3 className="font-semibold mb-2">Role Descriptions:</h3>
+              <h3 className="font-semibold mb-2">{t('manageRoles.roleDescriptions')}</h3>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li><strong>Admin:</strong> Full access to all features</li>
-                <li><strong>Servant:</strong> Can manage assigned children and record attendance</li>
-                <li><strong>Parent:</strong> Can view their child's information and attendance</li>
+                <li><strong>{t('roles.admin')}:</strong> {t('manageRoles.adminDesc')}</li>
+                <li><strong>{t('roles.servant')}:</strong> {t('manageRoles.servantDesc')}</li>
+                <li><strong>{t('roles.parent')}:</strong> {t('manageRoles.parentDesc')}</li>
               </ul>
             </div>
 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Current Role</TableHead>
-                  <TableHead>Change Role</TableHead>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead>{t('common.email')}</TableHead>
+                  <TableHead>{t('manageRoles.currentRole')}</TableHead>
+                  <TableHead>{t('manageRoles.changeRole')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      No users found
+                      {t('manageRoles.noUsers')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   users.map((u) => (
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.full_name}</TableCell>
-                      <TableCell>{u.email || "-"}</TableCell>
+                      <TableCell dir="ltr">{u.email || "-"}</TableCell>
                       <TableCell>
                         {u.role ? (
                           <Badge
@@ -195,10 +198,10 @@ const ManageRoles = () => {
                                 : "outline"
                             }
                           >
-                            {u.role}
+                            {getRoleLabel(u.role)}
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground">No role</span>
+                          <span className="text-muted-foreground">{t('manageRoles.noRole')}</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -212,10 +215,10 @@ const ManageRoles = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">No Role</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="servant">Servant</SelectItem>
-                            <SelectItem value="parent">Parent</SelectItem>
+                            <SelectItem value="none">{t('roles.none')}</SelectItem>
+                            <SelectItem value="admin">{t('roles.admin')}</SelectItem>
+                            <SelectItem value="servant">{t('roles.servant')}</SelectItem>
+                            <SelectItem value="parent">{t('roles.parent')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -229,16 +232,14 @@ const ManageRoles = () => {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Manual Setup (Alternative Method)</CardTitle>
-            <CardDescription>
-              If you need to manually set roles via the backend
-            </CardDescription>
+            <CardTitle>{t('manageRoles.manualSetup')}</CardTitle>
+            <CardDescription>{t('manageRoles.manualSetupDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>1. Open your Lovable Cloud backend</p>
             <p>2. Navigate to the <code className="bg-muted px-1 py-0.5 rounded">user_roles</code> table</p>
             <p>3. Click "Insert row" and add:</p>
-            <ul className="ml-6 space-y-1 list-disc">
+            <ul className={`space-y-1 list-disc ${isRTL ? 'mr-6' : 'ml-6'}`}>
               <li><strong>user_id:</strong> The user's ID from the profiles table</li>
               <li><strong>role:</strong> Select admin, servant, or parent</li>
             </ul>

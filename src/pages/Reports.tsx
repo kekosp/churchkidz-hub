@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, TrendingUp, Users, Calendar } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChildStats {
   id: string;
@@ -20,6 +21,7 @@ interface ChildStats {
 const Reports = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ChildStats[]>([]);
   const [totalChildren, setTotalChildren] = useState(0);
@@ -39,7 +41,6 @@ const Reports = () => {
     try {
       setLoading(true);
 
-      // Fetch children based on user role (RLS will automatically filter)
       const { data: childrenData, error: childrenError } = await supabase
         .from("children")
         .select("id, full_name");
@@ -48,7 +49,6 @@ const Reports = () => {
 
       setTotalChildren(childrenData?.length || 0);
 
-      // Fetch attendance records for the children the user can see
       const childIds = (childrenData || []).map((child: any) => child.id);
       
       let attendanceData: any[] = [];
@@ -62,7 +62,6 @@ const Reports = () => {
         attendanceData = data || [];
       }
 
-      // Calculate stats for each child
       const childStats: ChildStats[] = (childrenData || []).map((child: any) => {
         const childAttendance = attendanceData.filter(
           (a: any) => a.child_id === child.id
@@ -80,12 +79,10 @@ const Reports = () => {
         };
       });
 
-      // Sort by attendance percentage
       childStats.sort((a, b) => b.attendance_percentage - a.attendance_percentage);
 
       setStats(childStats);
 
-      // Calculate average attendance
       const totalPercentage = childStats.reduce(
         (sum, stat) => sum + stat.attendance_percentage,
         0
@@ -94,7 +91,7 @@ const Reports = () => {
         childStats.length > 0 ? Math.round(totalPercentage / childStats.length) : 0
       );
     } catch (error: any) {
-      toast.error("Failed to load reports");
+      toast.error(t('reports.loadError'));
       if (import.meta.env.DEV) {
         console.error("Error:", error);
       }
@@ -106,7 +103,7 @@ const Reports = () => {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -115,73 +112,71 @@ const Reports = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
         <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
+            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
+            {t('common.back')}
           </Button>
-          <h1 className="text-3xl font-bold">Reports & Statistics</h1>
+          <h1 className="text-3xl font-bold">{t('reports.title')}</h1>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Children</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalChildren}</div>
-              <p className="text-xs text-muted-foreground">Registered in the system</p>
+              <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Attendance</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{averageAttendance}%</div>
-              <p className="text-xs text-muted-foreground">Across all children</p>
+              <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Records</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
               </div>
-              <p className="text-xs text-muted-foreground">Attendance records</p>
+              <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
             </CardContent>
           </Card>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Individual Attendance Statistics</CardTitle>
-            <CardDescription>
-              Detailed attendance breakdown for each child
-            </CardDescription>
+            <CardTitle>{t('reports.individualStats')}</CardTitle>
+            <CardDescription>{t('reports.detailedBreakdown')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Child Name</TableHead>
-                    <TableHead className="text-center">Total Services</TableHead>
-                    <TableHead className="text-center">Attended</TableHead>
-                    <TableHead className="text-center">Attendance Rate</TableHead>
+                    <TableHead>{t('reports.childName')}</TableHead>
+                    <TableHead className="text-center">{t('reports.totalServices')}</TableHead>
+                    <TableHead className="text-center">{t('reports.attended')}</TableHead>
+                    <TableHead className="text-center">{t('reports.attendanceRate')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {stats.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground">
-                        No attendance data available yet
+                        {t('reports.noData')}
                       </TableCell>
                     </TableRow>
                   ) : (

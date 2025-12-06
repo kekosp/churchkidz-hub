@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Children from "./pages/Children";
 import Servants from "./pages/Servants";
+import ServantAttendance from "./pages/ServantAttendance";
 import Attendance from "./pages/Attendance";
 import Reports from "./pages/Reports";
 import AbsentChildren from "./pages/AbsentChildren";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/children" element={<Children />} />
           <Route path="/servants" element={<Servants />} />
+          <Route path="/servant-attendance" element={<ServantAttendance />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/absent-children" element={<AbsentChildren />} />
