@@ -127,6 +127,44 @@ export type Database = {
         }
         Relationships: []
       }
+      servant_attendance: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          present: boolean
+          recorded_by: string
+          servant_id: string
+          service_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          present?: boolean
+          recorded_by: string
+          servant_id: string
+          service_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          present?: boolean
+          recorded_by?: string
+          servant_id?: string
+          service_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servant_attendance_servant_id_fkey"
+            columns: ["servant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

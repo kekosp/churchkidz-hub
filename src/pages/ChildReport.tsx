@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Printer, Download, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChildData {
   id: string;
@@ -30,6 +31,7 @@ interface AttendanceRecord {
 const ChildReport = () => {
   const { childId } = useParams();
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [child, setChild] = useState<ChildData | null>(null);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
@@ -42,7 +44,6 @@ const ChildReport = () => {
     try {
       setLoading(true);
 
-      // Fetch child data
       const { data: childData, error: childError } = await supabase
         .from("children")
         .select("*")
@@ -52,7 +53,6 @@ const ChildReport = () => {
       if (childError) throw childError;
       setChild(childData);
 
-      // Fetch attendance records
       const { data: attendanceData, error: attendanceError } = await supabase
         .from("attendance")
         .select("service_date, present, notes")
@@ -63,7 +63,7 @@ const ChildReport = () => {
       setAttendanceRecords(attendanceData || []);
     } catch (error: any) {
       console.error("Error fetching child data:", error);
-      toast.error("Failed to load child report");
+      toast.error(t('childReport.loadError'));
     } finally {
       setLoading(false);
     }
@@ -74,8 +74,7 @@ const ChildReport = () => {
   };
 
   const handleExport = () => {
-    // Use browser's print to PDF functionality
-    toast.info("Use Print > Save as PDF to export the report");
+    toast.info(t('childReport.exportHint'));
     window.print();
   };
 
@@ -101,7 +100,7 @@ const ChildReport = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Loading report...</p>
+        <p>{t('childReport.loadingReport')}</p>
       </div>
     );
   }
@@ -109,10 +108,10 @@ const ChildReport = () => {
   if (!child) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p>Child not found</p>
+        <p>{t('childReport.notFound')}</p>
         <Button onClick={() => navigate("/children")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Children
+          <ArrowLeft className={`h-4 w-4 ${isRTL ? 'ml-2 rtl-flip' : 'mr-2'}`} />
+          {t('childReport.backToChildren')}
         </Button>
       </div>
     );
@@ -123,18 +122,18 @@ const ChildReport = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Action buttons - hidden when printing */}
-      <div className="no-print fixed top-4 right-4 z-50 flex gap-2">
+      <div className="no-print fixed top-4 z-50 flex gap-2" style={{ [isRTL ? 'left' : 'right']: '1rem' }}>
         <Button variant="outline" onClick={() => navigate("/children")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          <ArrowLeft className={`h-4 w-4 ${isRTL ? 'ml-2 rtl-flip' : 'mr-2'}`} />
+          {t('common.back')}
         </Button>
         <Button variant="outline" onClick={handlePrint}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print
+          <Printer className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          {t('childReport.print')}
         </Button>
         <Button onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" />
-          Export PDF
+          <Download className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          {t('childReport.exportPDF')}
         </Button>
       </div>
 
@@ -142,61 +141,61 @@ const ChildReport = () => {
       <div className="max-w-4xl mx-auto p-8 print:p-0">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Child Profile Report</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('childReport.title')}</h1>
           <p className="text-muted-foreground">
-            Generated on {format(new Date(), "MMMM dd, yyyy 'at' HH:mm")}
+            {t('childReport.generatedOn')} {format(new Date(), "MMMM dd, yyyy 'at' HH:mm")}
           </p>
         </div>
 
         {/* Personal Information */}
         <Card className="mb-6 print:shadow-none print:border-2">
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+            <CardTitle>{t('childReport.personalInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Full Name</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('childReport.fullName')}</p>
                 <p className="text-base font-semibold">{child.full_name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('childReport.dateOfBirth')}</p>
                 <p className="text-base">
                   {format(new Date(child.date_of_birth), "MMMM dd, yyyy")} 
-                  <span className="text-muted-foreground ml-2">
-                    ({calculateAge(child.date_of_birth)} years old)
+                  <span className="text-muted-foreground mx-2">
+                    ({calculateAge(child.date_of_birth)} {t('childReport.yearsOld')})
                   </span>
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">School Grade</p>
-                <p className="text-base">{child.school_grade || "Not specified"}</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('childReport.schoolGrade')}</p>
+                <p className="text-base">{child.school_grade || t('childReport.notSpecified')}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <p className="text-base capitalize">{child.attendance_status || "Active"}</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('childReport.status')}</p>
+                <p className="text-base capitalize">{child.attendance_status || t('childReport.active')}</p>
               </div>
             </div>
             {child.address && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Address</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('childReport.address')}</p>
                 <p className="text-base">{child.address}</p>
               </div>
             )}
             <Separator />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Parent Name</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('childReport.parentName')}</p>
                 <p className="text-base">{child.parent_name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Parent Phone</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('childReport.parentPhone')}</p>
                 <p className="text-base" dir="ltr">{child.parent_phone}</p>
               </div>
             </div>
             <Separator />
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Registration Date</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('childReport.registrationDate')}</p>
               <p className="text-base">{format(new Date(child.created_at), "MMMM dd, yyyy")}</p>
             </div>
           </CardContent>
@@ -206,7 +205,7 @@ const ChildReport = () => {
         {child.notes && (
           <Card className="mb-6 print:shadow-none print:border-2">
             <CardHeader>
-              <CardTitle>General Notes</CardTitle>
+              <CardTitle>{t('childReport.generalNotes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-base whitespace-pre-wrap">{child.notes}</p>
@@ -217,25 +216,25 @@ const ChildReport = () => {
         {/* Attendance Summary */}
         <Card className="mb-6 print:shadow-none print:border-2">
           <CardHeader>
-            <CardTitle>Attendance Summary</CardTitle>
+            <CardTitle>{t('childReport.attendanceSummary')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-4 mb-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-primary">{stats.total}</p>
-                <p className="text-sm text-muted-foreground">Total Sessions</p>
+                <p className="text-sm text-muted-foreground">{t('childReport.totalSessions')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-green-600">{stats.present}</p>
-                <p className="text-sm text-muted-foreground">Present</p>
+                <p className="text-sm text-muted-foreground">{t('common.present')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
-                <p className="text-sm text-muted-foreground">Absent</p>
+                <p className="text-sm text-muted-foreground">{t('common.absent')}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold">{stats.percentage}%</p>
-                <p className="text-sm text-muted-foreground">Attendance Rate</p>
+                <p className="text-sm text-muted-foreground">{t('reports.attendanceRate')}</p>
               </div>
             </div>
           </CardContent>
@@ -244,11 +243,11 @@ const ChildReport = () => {
         {/* Attendance History */}
         <Card className="print:shadow-none print:border-2">
           <CardHeader>
-            <CardTitle>Attendance History</CardTitle>
+            <CardTitle>{t('childReport.attendanceHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
             {attendanceRecords.length === 0 ? (
-              <p className="text-muted-foreground">No attendance records found</p>
+              <p className="text-muted-foreground">{t('childReport.noRecords')}</p>
             ) : (
               <div className="space-y-3">
                 {attendanceRecords.map((record, index) => (
@@ -264,7 +263,7 @@ const ChildReport = () => {
                             : "bg-red-100 text-red-800 print:border print:border-red-600"
                         }`}
                       >
-                        {record.present ? "Present" : "Absent"}
+                        {record.present ? t('common.present') : t('common.absent')}
                       </span>
                     </div>
                     {record.notes && (
@@ -279,7 +278,7 @@ const ChildReport = () => {
 
         {/* Footer */}
         <div className="mt-8 pt-4 border-t text-center text-sm text-muted-foreground print:mt-12">
-          <p>End of Report</p>
+          <p>{t('childReport.endOfReport')}</p>
         </div>
       </div>
 

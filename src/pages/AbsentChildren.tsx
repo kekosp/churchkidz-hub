@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { ArrowLeft, Send, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AbsentChild {
   id: string;
@@ -19,6 +20,7 @@ interface AbsentChild {
 const AbsentChildren = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [absentChildren, setAbsentChildren] = useState<AbsentChild[]>([]);
@@ -31,7 +33,7 @@ const AbsentChildren = () => {
     }
     if (!authLoading && userRole !== "admin" && userRole !== "servant") {
       navigate("/dashboard");
-      toast.error("You don't have permission to access this page");
+      toast.error(t('absentChildren.noPermission'));
       return;
     }
     if (user && (userRole === "admin" || userRole === "servant")) {
@@ -43,14 +45,12 @@ const AbsentChildren = () => {
     try {
       setLoading(true);
 
-      // Fetch all children that the user can see (RLS will filter)
       const { data: allChildren, error: childrenError } = await supabase
         .from("children")
         .select("id, full_name, parent_name, parent_phone");
 
       if (childrenError) throw childrenError;
 
-      // Fetch attendance records for the selected date
       const { data: attendanceData, error: attendanceError } = await supabase
         .from("attendance")
         .select("child_id, present")
@@ -58,7 +58,6 @@ const AbsentChildren = () => {
 
       if (attendanceError) throw attendanceError;
 
-      // Find children who don't have attendance records or were marked absent
       const attendedChildIds = new Set(
         (attendanceData || [])
           .filter((a: any) => a.present)
@@ -71,7 +70,7 @@ const AbsentChildren = () => {
 
       setAbsentChildren(absentList);
     } catch (error: any) {
-      toast.error("Failed to load absent children");
+      toast.error(t('absentChildren.loadError'));
       if (import.meta.env.DEV) {
         console.error("Error:", error);
       }
@@ -82,7 +81,7 @@ const AbsentChildren = () => {
 
   const sendAbsenceNotifications = async () => {
     if (absentChildren.length === 0) {
-      toast.error("No absent children to notify");
+      toast.error(t('absentChildren.noChildren'));
       return;
     }
 
@@ -111,17 +110,17 @@ const AbsentChildren = () => {
     setSending(false);
 
     if (successCount > 0) {
-      toast.success(`Successfully sent ${successCount} WhatsApp notifications`);
+      toast.success(`${t('absentChildren.notifySuccess')} (${successCount})`);
     }
     if (failCount > 0) {
-      toast.error(`Failed to send ${failCount} notifications`);
+      toast.error(`${t('absentChildren.notifyPartialError')} (${failCount})`);
     }
   };
 
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -132,16 +131,16 @@ const AbsentChildren = () => {
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Absent Children Report</h1>
-              <p className="text-muted-foreground">View and notify parents of absent children</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('absentChildren.title')}</h1>
+              <p className="text-muted-foreground">{t('absentChildren.subtitle')}</p>
             </div>
           </div>
         </div>
 
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-6 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <input
@@ -149,41 +148,42 @@ const AbsentChildren = () => {
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+              dir="ltr"
             />
           </div>
           {absentChildren.length > 0 && userRole === "admin" && (
             <Button
               onClick={sendAbsenceNotifications}
               disabled={sending}
-              className="ml-auto"
+              className={isRTL ? "mr-auto" : "ml-auto"}
             >
-              <Send className="mr-2 h-4 w-4" />
-              {sending ? "Sending..." : `Send WhatsApp to ${absentChildren.length} Parents`}
+              <Send className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              {sending ? t('absentChildren.sending') : `${t('absentChildren.sendWhatsApp')} ${absentChildren.length} ${t('absentChildren.parents')}`}
             </Button>
           )}
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Absent Children on {format(new Date(selectedDate), "MMMM dd, yyyy")}</CardTitle>
+            <CardTitle>{t('absentChildren.title')} - {format(new Date(selectedDate), "MMMM dd, yyyy")}</CardTitle>
             <CardDescription>
               {absentChildren.length === 0
-                ? "All children attended on this date"
-                : `${absentChildren.length} children were absent`}
+                ? t('absentChildren.allAttended')
+                : `${absentChildren.length} ${t('absentChildren.absentCount')}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {absentChildren.length === 0 ? (
               <div className="py-8 text-center text-muted-foreground">
-                No absent children for this date
+                {t('absentChildren.noAbsent')}
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Child Name</TableHead>
-                    <TableHead>Parent Name</TableHead>
-                    <TableHead>Parent Phone</TableHead>
+                    <TableHead>{t('absentChildren.childName')}</TableHead>
+                    <TableHead>{t('absentChildren.parentName')}</TableHead>
+                    <TableHead>{t('absentChildren.parentPhone')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -191,7 +191,7 @@ const AbsentChildren = () => {
                     <TableRow key={child.id}>
                       <TableCell className="font-medium">{child.full_name}</TableCell>
                       <TableCell>{child.parent_name}</TableCell>
-                      <TableCell>{child.parent_phone}</TableCell>
+                      <TableCell dir="ltr">{child.parent_phone}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
