@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine } from "lucide-react";
+import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -83,6 +83,12 @@ const Dashboard = () => {
       description: t('dashboard.manageRolesDesc'),
       icon: Shield,
       href: "/manage-roles",
+    },
+    {
+      title: t('dashboard.servantAttendance'),
+      description: t('dashboard.servantAttendanceDesc'),
+      icon: UserCog,
+      href: "/servant-attendance",
     },
   ];
 
