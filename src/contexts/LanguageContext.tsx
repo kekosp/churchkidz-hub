@@ -102,6 +102,8 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.attendanceHistoryDesc': 'View attendance records for your children',
     'dashboard.servantAttendance': 'Servant Attendance',
     'dashboard.servantAttendanceDesc': 'Record attendance for servants',
+    'dashboard.tayoPoints': 'Tayo Points',
+    'dashboard.tayoPointsDesc': 'Manage reward points for children',
     
     // Children
     'children.title': 'Children Management',
@@ -258,6 +260,27 @@ const translations: Record<Language, Record<string, string>> = {
     'roles.none': 'No Role',
     'roles.assignRole': 'Assign Role',
     'roles.currentRole': 'Current Role',
+    
+    // Tayo Points
+    'tayo.title': 'Tayo Points',
+    'tayo.subtitle': 'Reward system for children',
+    'tayo.points': 'points',
+    'tayo.add': 'Add',
+    'tayo.deduct': 'Deduct',
+    'tayo.addPoints': 'Add Points',
+    'tayo.deductPoints': 'Deduct Points',
+    'tayo.addPointsDesc': 'Add points to reward good behavior',
+    'tayo.deductPointsDesc': 'Deduct points for behavior correction',
+    'tayo.pointsAmount': 'Points Amount',
+    'tayo.reason': 'Reason',
+    'tayo.reasonPlaceholder': 'Enter reason for points change...',
+    'tayo.noReason': 'No reason',
+    'tayo.noTransactions': 'No transactions yet',
+    'tayo.leaderboard': 'Leaderboard',
+    'tayo.loadError': 'Failed to load points data',
+    'tayo.saveError': 'Failed to save points',
+    'tayo.addSuccess': 'Points added successfully',
+    'tayo.deductSuccess': 'Points deducted successfully',
   },
   ar: {
     // Common
@@ -349,6 +372,8 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.attendanceHistoryDesc': 'عرض سجلات حضور أطفالك',
     'dashboard.servantAttendance': 'حضور الخدام',
     'dashboard.servantAttendanceDesc': 'تسجيل حضور الخدام',
+    'dashboard.tayoPoints': 'نقاط طايو',
+    'dashboard.tayoPointsDesc': 'إدارة نقاط المكافآت للأطفال',
     
     // Children
     'children.title': 'إدارة الأطفال',
@@ -505,6 +530,27 @@ const translations: Record<Language, Record<string, string>> = {
     'roles.none': 'بدون دور',
     'roles.assignRole': 'تعيين دور',
     'roles.currentRole': 'الدور الحالي',
+    
+    // Tayo Points
+    'tayo.title': 'نقاط طايو',
+    'tayo.subtitle': 'نظام المكافآت للأطفال',
+    'tayo.points': 'نقاط',
+    'tayo.add': 'إضافة',
+    'tayo.deduct': 'خصم',
+    'tayo.addPoints': 'إضافة نقاط',
+    'tayo.deductPoints': 'خصم نقاط',
+    'tayo.addPointsDesc': 'أضف نقاط لمكافأة السلوك الجيد',
+    'tayo.deductPointsDesc': 'اخصم نقاط لتصحيح السلوك',
+    'tayo.pointsAmount': 'عدد النقاط',
+    'tayo.reason': 'السبب',
+    'tayo.reasonPlaceholder': 'أدخل سبب تغيير النقاط...',
+    'tayo.noReason': 'بدون سبب',
+    'tayo.noTransactions': 'لا توجد معاملات بعد',
+    'tayo.leaderboard': 'لوحة المتصدرين',
+    'tayo.loadError': 'فشل في تحميل بيانات النقاط',
+    'tayo.saveError': 'فشل في حفظ النقاط',
+    'tayo.addSuccess': 'تمت إضافة النقاط بنجاح',
+    'tayo.deductSuccess': 'تم خصم النقاط بنجاح',
   },
 };
 
