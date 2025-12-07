@@ -17,6 +17,7 @@ import ChildReport from "./pages/ChildReport";
 import ManageRoles from "./pages/ManageRoles";
 import QRCodes from "./pages/QRCodes";
 import QRScanner from "./pages/QRScanner";
+import TayoPoints from "./pages/TayoPoints";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/manage-roles" element={<ManageRoles />} />
           <Route path="/qr-codes" element={<QRCodes />} />
           <Route path="/qr-scanner" element={<QRScanner />} />
+          <Route path="/tayo-points" element={<TayoPoints />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

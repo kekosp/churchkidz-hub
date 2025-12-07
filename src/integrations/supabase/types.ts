@@ -165,6 +165,41 @@ export type Database = {
           },
         ]
       }
+      tayo_transactions: {
+        Row: {
+          child_id: string
+          created_at: string
+          id: string
+          points: number
+          reason: string | null
+          recorded_by: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          id?: string
+          points: number
+          reason?: string | null
+          recorded_by: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          id?: string
+          points?: number
+          reason?: string | null
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tayo_transactions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
