@@ -157,7 +157,7 @@ const Children = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this child?")) return;
+    if (!window.confirm(t('children.confirmDelete'))) return;
 
     try {
       const { error } = await supabase
@@ -394,13 +394,13 @@ const Children = () => {
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>{editingChild ? "Edit Child" : "Add New Child"}</DialogTitle>
-                    <DialogDescription>Enter the child's information below</DialogDescription>
+                    <DialogTitle>{editingChild ? t('children.editChild') : t('children.addNew')}</DialogTitle>
+                    <DialogDescription>{t('children.formDescription')}</DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="full_name">Full Name *</Label>
+                        <Label htmlFor="full_name">{t('children.fullName')} *</Label>
                         <Input
                           id="full_name"
                           value={formData.full_name}
@@ -409,7 +409,7 @@ const Children = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                        <Label htmlFor="date_of_birth">{t('children.dateOfBirth')} *</Label>
                         <Input
                           id="date_of_birth"
                           type="date"
@@ -422,7 +422,7 @@ const Children = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="parent_name">Parent Name *</Label>
+                        <Label htmlFor="parent_name">{t('children.parentName')} *</Label>
                         <Input
                           id="parent_name"
                           value={formData.parent_name}
@@ -431,7 +431,7 @@ const Children = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="parent_phone">Parent Phone *</Label>
+                        <Label htmlFor="parent_phone">{t('children.parentPhone')} *</Label>
                         <Input
                           id="parent_phone"
                           type="tel"
@@ -443,7 +443,7 @@ const Children = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="address">Address</Label>
+                      <Label htmlFor="address">{t('children.address')}</Label>
                       <Input
                         id="address"
                         value={formData.address}
@@ -453,7 +453,7 @@ const Children = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="school_grade">School Grade</Label>
+                        <Label htmlFor="school_grade">{t('children.schoolGrade')}</Label>
                         <Input
                           id="school_grade"
                           value={formData.school_grade}
@@ -461,7 +461,7 @@ const Children = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="attendance_status">Attendance Status</Label>
+                        <Label htmlFor="attendance_status">{t('children.attendanceStatus')}</Label>
                         <Select
                           value={formData.attendance_status}
                           onValueChange={(value) => setFormData({ ...formData, attendance_status: value })}
@@ -470,9 +470,9 @@ const Children = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Regular">Regular</SelectItem>
-                            <SelectItem value="Irregular">Irregular</SelectItem>
-                            <SelectItem value="New">New</SelectItem>
+                            <SelectItem value="Regular">{t('children.regular')}</SelectItem>
+                            <SelectItem value="Irregular">{t('children.irregular')}</SelectItem>
+                            <SelectItem value="New">{t('children.new')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -480,16 +480,16 @@ const Children = () => {
 
                     {userRole === "admin" && (
                       <div className="space-y-2">
-                        <Label htmlFor="servant_id">Assigned Servant</Label>
+                        <Label htmlFor="servant_id">{t('children.assignedServant')}</Label>
                         <Select
                           value={formData.servant_id || "_none"}
                           onValueChange={(value) => setFormData({ ...formData, servant_id: value === "_none" ? "" : value })}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a servant (optional)" />
+                            <SelectValue placeholder={t('children.selectServant')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="_none">None</SelectItem>
+                            <SelectItem value="_none">{t('children.noServant')}</SelectItem>
                             {servants.map((servant: any) => (
                               <SelectItem key={servant.user_id} value={servant.user_id}>
                                 {servant.profiles?.full_name || "Unknown"}
@@ -501,7 +501,7 @@ const Children = () => {
                     )}
 
                     <div className="space-y-2">
-                      <Label htmlFor="notes">Notes</Label>
+                      <Label htmlFor="notes">{t('common.notes')}</Label>
                       <Textarea
                         id="notes"
                         value={formData.notes}
@@ -512,10 +512,10 @@ const Children = () => {
 
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                       <Button type="submit">
-                        {editingChild ? "Update" : "Add"} Child
+                        {editingChild ? t('common.edit') : t('common.add')}
                       </Button>
                     </div>
                   </form>

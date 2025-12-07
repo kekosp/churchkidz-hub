@@ -106,6 +106,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Children
     'children.title': 'Children Management',
     'children.addNew': 'Add New Child',
+    'children.editChild': 'Edit Child',
     'children.noChildren': 'No children found',
     'children.fullName': 'Full Name',
     'children.dateOfBirth': 'Date of Birth',
@@ -114,6 +115,14 @@ const translations: Record<Language, Record<string, string>> = {
     'children.address': 'Address',
     'children.schoolGrade': 'School Grade',
     'children.attendanceStatus': 'Attendance Status',
+    'children.assignedServant': 'Assigned Servant',
+    'children.selectServant': 'Select Servant',
+    'children.noServant': 'No Servant Assigned',
+    'children.formDescription': 'Enter the child\'s information below',
+    'children.regular': 'Regular',
+    'children.irregular': 'Irregular',
+    'children.new': 'New',
+    'children.confirmDelete': 'Are you sure you want to delete this child?',
     
     // Servants
     'servants.title': 'Servants Management',
@@ -344,6 +353,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Children
     'children.title': 'إدارة الأطفال',
     'children.addNew': 'إضافة طفل جديد',
+    'children.editChild': 'تعديل الطفل',
     'children.noChildren': 'لم يتم العثور على أطفال',
     'children.fullName': 'الاسم الكامل',
     'children.dateOfBirth': 'تاريخ الميلاد',
@@ -352,6 +362,14 @@ const translations: Record<Language, Record<string, string>> = {
     'children.address': 'العنوان',
     'children.schoolGrade': 'الصف الدراسي',
     'children.attendanceStatus': 'حالة الحضور',
+    'children.assignedServant': 'الخادم المعين',
+    'children.selectServant': 'اختر خادم',
+    'children.noServant': 'لا يوجد خادم معين',
+    'children.formDescription': 'أدخل معلومات الطفل أدناه',
+    'children.regular': 'منتظم',
+    'children.irregular': 'غير منتظم',
+    'children.new': 'جديد',
+    'children.confirmDelete': 'هل أنت متأكد أنك تريد حذف هذا الطفل؟',
     
     // Servants
     'servants.title': 'إدارة الخدام',
