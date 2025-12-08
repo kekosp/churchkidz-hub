@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { ArrowLeft, Send, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AbsentChild {
@@ -165,7 +165,7 @@ const AbsentChildren = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('absentChildren.title')} - {format(new Date(selectedDate), "MMMM dd, yyyy")}</CardTitle>
+            <CardTitle>{t('absentChildren.title')} - {format(parseISO(selectedDate), "MMMM dd, yyyy")}</CardTitle>
             <CardDescription>
               {absentChildren.length === 0
                 ? t('absentChildren.allAttended')
