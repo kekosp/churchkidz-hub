@@ -15,6 +15,7 @@ interface AbsentChild {
   full_name: string;
   parent_name: string;
   parent_phone: string;
+  school_grade: string | null;
 }
 
 const AbsentChildren = () => {
@@ -62,7 +63,7 @@ const AbsentChildren = () => {
 
       const { data: allChildren, error: childrenError } = await supabase
         .from("children")
-        .select("id, full_name, parent_name, parent_phone");
+        .select("id, full_name, parent_name, parent_phone, school_grade");
 
       if (childrenError) throw childrenError;
 
@@ -106,8 +107,9 @@ const AbsentChildren = () => {
     }
     
     const formattedDate = format(parseISO(selectedDate), "dd/MM/yyyy");
+    const grade = child.school_grade || '';
     const message = encodeURIComponent(
-      `السلام عليكم ${child.parent_name}،\n\nنود إعلامكم بأن ${child.full_name} لم يحضر اجتماع يوم ${formattedDate}.\n\nنتمنى أن يكون كل شيء على ما يرام. نحن نفتقدهم!\n\nمع تحيات كنيسة الأطفال 🙏`
+      `صباح الخير ${child.parent_name}،\n\nنود إعلامكم بأن ${child.full_name} لم يحضر اجتماع يوم ${formattedDate}.\n\nنتمنى أن يكون كل شيء على ما يرام. نحن نفتقدهم!\n\n#${grade}`
     );
     
     // Open WhatsApp Web link
