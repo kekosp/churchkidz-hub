@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { ArrowLeft, Send, Calendar } from "lucide-react";
+import { ArrowLeft, MessageCircle, Calendar } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -22,7 +22,6 @@ const AbsentChildren = () => {
   const { user, userRole, loading: authLoading } = useAuth();
   const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
   const [absentChildren, setAbsentChildren] = useState<AbsentChild[]>([]);
   const [selectedDate, setSelectedDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
 
@@ -95,42 +94,24 @@ const AbsentChildren = () => {
     }
   };
 
-  const sendAbsenceNotifications = async () => {
-    if (absentChildren.length === 0) {
-      toast.error(t('absentChildren.noChildren'));
-      return;
+  const openWhatsApp = (child: AbsentChild) => {
+    // Format phone number - remove any non-digit characters
+    let phone = child.parent_phone.replace(/\D/g, '');
+    
+    // Ensure it starts with country code (assume Egypt +20 if not present)
+    if (!phone.startsWith('20') && phone.startsWith('0')) {
+      phone = '20' + phone.substring(1);
+    } else if (!phone.startsWith('20')) {
+      phone = '20' + phone;
     }
-
-    setSending(true);
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const child of absentChildren) {
-      try {
-        const { error } = await supabase.functions.invoke("send-whatsapp-absence", {
-          body: {
-            childName: child.full_name,
-            parentPhone: child.parent_phone,
-            date: format(parseISO(selectedDate), "dd/MM/yyyy"),
-          },
-        });
-
-        if (error) throw error;
-        successCount++;
-      } catch (error: any) {
-        console.error(`Failed to send notification for ${child.full_name}:`, error);
-        failCount++;
-      }
-    }
-
-    setSending(false);
-
-    if (successCount > 0) {
-      toast.success(`${t('absentChildren.notifySuccess')} (${successCount})`);
-    }
-    if (failCount > 0) {
-      toast.error(`${t('absentChildren.notifyPartialError')} (${failCount})`);
-    }
+    
+    const formattedDate = format(parseISO(selectedDate), "dd/MM/yyyy");
+    const message = encodeURIComponent(
+      `السلام عليكم ${child.parent_name}،\n\nنود إعلامكم بأن ${child.full_name} لم يحضر اجتماع يوم ${formattedDate}.\n\nنتمنى أن يكون كل شيء على ما يرام. نحن نفتقدهم!\n\nمع تحيات كنيسة الأطفال 🙏`
+    );
+    
+    // Open WhatsApp Web link
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   };
 
   if (authLoading || loading) {
@@ -167,16 +148,6 @@ const AbsentChildren = () => {
               dir="ltr"
             />
           </div>
-          {absentChildren.length > 0 && userRole === "admin" && (
-            <Button
-              onClick={sendAbsenceNotifications}
-              disabled={sending}
-              className={isRTL ? "mr-auto" : "ml-auto"}
-            >
-              <Send className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-              {sending ? t('absentChildren.sending') : `${t('absentChildren.sendWhatsApp')} ${absentChildren.length} ${t('absentChildren.parents')}`}
-            </Button>
-          )}
         </div>
 
         <Card>
@@ -200,6 +171,7 @@ const AbsentChildren = () => {
                     <TableHead>{t('absentChildren.childName')}</TableHead>
                     <TableHead>{t('absentChildren.parentName')}</TableHead>
                     <TableHead>{t('absentChildren.parentPhone')}</TableHead>
+                    <TableHead className="w-[100px]">{t('common.actions') || 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -208,6 +180,17 @@ const AbsentChildren = () => {
                       <TableCell className="font-medium">{child.full_name}</TableCell>
                       <TableCell>{child.parent_name}</TableCell>
                       <TableCell dir="ltr">{child.parent_phone}</TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openWhatsApp(child)}
+                          className="gap-1"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          WhatsApp
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
