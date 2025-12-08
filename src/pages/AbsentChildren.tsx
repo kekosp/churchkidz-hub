@@ -24,7 +24,23 @@ const AbsentChildren = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [absentChildren, setAbsentChildren] = useState<AbsentChild[]>([]);
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [selectedDate, setSelectedDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only update if valid date string
+    if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      setSelectedDate(value);
+    }
+  };
+
+  const getFormattedDate = (dateStr: string) => {
+    try {
+      return format(parseISO(dateStr), "MMMM dd, yyyy");
+    } catch {
+      return dateStr;
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -146,7 +162,7 @@ const AbsentChildren = () => {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={handleDateChange}
               className="rounded-md border border-input bg-background px-3 py-2 text-sm"
               dir="ltr"
             />
@@ -165,7 +181,7 @@ const AbsentChildren = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('absentChildren.title')} - {format(parseISO(selectedDate), "MMMM dd, yyyy")}</CardTitle>
+            <CardTitle>{t('absentChildren.title')} - {getFormattedDate(selectedDate)}</CardTitle>
             <CardDescription>
               {absentChildren.length === 0
                 ? t('absentChildren.allAttended')
