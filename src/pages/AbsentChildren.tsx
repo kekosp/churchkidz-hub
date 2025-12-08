@@ -95,7 +95,7 @@ const AbsentChildren = () => {
           body: {
             childName: child.full_name,
             parentPhone: child.parent_phone,
-            date: format(new Date(selectedDate), "dd/MM/yyyy"),
+            date: format(parseISO(selectedDate), "dd/MM/yyyy"),
           },
         });
 
