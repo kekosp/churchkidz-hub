@@ -219,13 +219,9 @@ const Children = () => {
       let failedCount = 0;
       const errors: string[] = [];
 
-      const { data: existingChildren, error: fetchError } = await supabase
+      const { data: existingChildren } = await supabase
         .from("children")
         .select("full_name, date_of_birth, parent_phone");
-
-      if (fetchError) {
-        throw new Error("Failed to fetch existing children: " + fetchError.message);
-      }
 
       for (let i = 0; i < jsonData.length; i++) {
         const row: any = jsonData[i];
@@ -250,7 +246,7 @@ const Children = () => {
             continue;
           }
 
-          const isDuplicate = (existingChildren || []).some(
+          const isDuplicate = existingChildren?.some(
             (child) =>
               child.full_name.toLowerCase() === childData.full_name.toLowerCase() &&
               child.date_of_birth === childData.date_of_birth &&
@@ -384,7 +380,7 @@ const Children = () => {
           {canEdit && (
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="gap-2">
-                <Upload className="h-4 w-4" /> {t('common.import')}
+                <Upload className="h-4 w-4" /> {t('common.export')}
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={(open) => {
                 setIsDialogOpen(open);
