@@ -47,6 +47,7 @@ const Children = () => {
     failed: number;
     errors: string[];
   } | null>(null);
+  const [googleSheetUrl, setGoogleSheetUrl] = useState("");
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -341,6 +342,152 @@ const Children = () => {
       e.target.value = "";
     }
   };
+
+  const handleGoogleSheetImport = async () => {
+    if (!googleSheetUrl.trim()) {
+      toast.error("Please enter a Google Sheets URL");
+      return;
+    }
+
+    // Extract sheet ID from various Google Sheets URL formats
+    const sheetIdMatch = googleSheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (!sheetIdMatch) {
+      toast.error("Invalid Google Sheets URL. Please use a valid Google Sheets link.");
+      return;
+    }
+
+    const sheetId = sheetIdMatch[1];
+    setImporting(true);
+    setImportResults(null);
+
+    try {
+      // Fetch as CSV from the public export URL
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+      const response = await fetch(csvUrl);
+      
+      if (!response.ok) {
+        throw new Error("Could not fetch the sheet. Make sure it's set to 'Anyone with the link can view'.");
+      }
+
+      const csvText = await response.text();
+      const rows = csvText.split('\n').map(row => {
+        // Parse CSV properly handling quoted values
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < row.length; i++) {
+          const char = row[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim());
+        return result;
+      });
+
+      if (rows.length < 2) {
+        toast.error("The sheet appears to be empty or has no data rows.");
+        setImporting(false);
+        return;
+      }
+
+      const headers = rows[0].map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+      const dataRows = rows.slice(1).filter(row => row.some(cell => cell.trim()));
+
+      let successCount = 0;
+      let failedCount = 0;
+      const errors: string[] = [];
+
+      const { data: existingChildren } = await supabase
+        .from("children")
+        .select("full_name, date_of_birth, parent_phone");
+
+      for (let i = 0; i < dataRows.length; i++) {
+        const row = dataRows[i];
+        try {
+          const getValue = (possibleHeaders: string[]) => {
+            for (const h of possibleHeaders) {
+              const idx = headers.findIndex(header => header.includes(h));
+              if (idx !== -1 && row[idx]) {
+                return sanitizeCell(row[idx]);
+              }
+            }
+            return "";
+          };
+
+          const childData = {
+            full_name: getValue(["full_name", "name", "الاسم"]),
+            date_of_birth: parseExcelDate(getValue(["date_of_birth", "dob", "birth", "تاريخ"])),
+            parent_name: getValue(["parent_name", "parent", "ولي"]),
+            parent_phone: getValue(["parent_phone", "phone", "هاتف", "تليفون"]),
+            address: getValue(["address", "عنوان"]),
+            school_grade: getValue(["school_grade", "grade", "الصف", "المرحلة"]),
+            attendance_status: getValue(["attendance_status", "status"]) || "Regular",
+            notes: getValue(["notes", "ملاحظات"]),
+            servant_id: null,
+          };
+
+          const validation = childSchema.safeParse(childData);
+          if (!validation.success) {
+            const errorMsg = validation.error.errors.map((e) => e.message).join(", ");
+            errors.push(`Row ${i + 2}: ${errorMsg}`);
+            failedCount++;
+            continue;
+          }
+
+          const isDuplicate = existingChildren?.some(
+            (child) =>
+              child.full_name.toLowerCase() === childData.full_name.toLowerCase() &&
+              child.date_of_birth === childData.date_of_birth &&
+              child.parent_phone === childData.parent_phone
+          );
+
+          if (isDuplicate) {
+            errors.push(`Row ${i + 2}: Duplicate entry for ${childData.full_name}`);
+            failedCount++;
+            continue;
+          }
+
+          const dataToInsert: any = { ...childData };
+          if (userRole === "parent" && user) {
+            dataToInsert.parent_id = user.id;
+          }
+
+          const { error } = await supabase.from("children").insert(dataToInsert);
+          if (error) throw error;
+
+          successCount++;
+        } catch (error: any) {
+          errors.push(`Row ${i + 2}: ${error.message}`);
+          failedCount++;
+        }
+      }
+
+      setImportResults({ success: successCount, failed: failedCount, errors });
+      
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} children`);
+        fetchChildren();
+      }
+      
+      if (failedCount > 0) {
+        toast.error(`Failed to import ${failedCount} children. Check the results for details.`);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to import from Google Sheets");
+      if (import.meta.env.DEV) {
+        console.error("Google Sheets import error:", error);
+      }
+    } finally {
+      setImporting(false);
+    }
+  };
   const downloadTemplate = () => {
     const template = [
       {
@@ -580,18 +727,59 @@ const Children = () => {
           </Card>
         )}
 
-        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <Dialog open={isImportDialogOpen} onOpenChange={(open) => {
+          setIsImportDialogOpen(open);
+          if (!open) {
+            setGoogleSheetUrl("");
+            setImportResults(null);
+          }
+        }}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Import Children from Excel</DialogTitle>
+              <DialogTitle>Import Children</DialogTitle>
               <DialogDescription>
-                Upload an Excel file (.xlsx) or CSV file to import multiple children at once. 
-                The system will validate data and prevent duplicates.
+                Import children from Google Sheets or upload a file.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center">
+            <div className="space-y-6">
+              {/* Google Sheets Import */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm flex items-center gap-2">
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">Recommended</span>
+                  Google Sheets
+                </h4>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Paste your Google Sheets URL here..."
+                    value={googleSheetUrl}
+                    onChange={(e) => setGoogleSheetUrl(e.target.value)}
+                    disabled={importing}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleGoogleSheetImport} 
+                    disabled={importing || !googleSheetUrl.trim()}
+                  >
+                    Import
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Make sure your sheet is set to "Anyone with the link can view"
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or upload a file</span>
+                </div>
+              </div>
+
+              {/* File Upload */}
+              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 text-center">
                 <input
                   type="file"
                   accept=".xlsx,.xls,.csv"
@@ -599,28 +787,25 @@ const Children = () => {
                   disabled={importing}
                   className="block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
                 />
-                <p className="text-sm text-muted-foreground mt-2">
-                  Supported formats: Excel (.xlsx, .xls) and CSV (.csv)
+                <p className="text-xs text-muted-foreground mt-2">
+                  Excel (.xlsx, .xls) or CSV
                 </p>
               </div>
 
               <div className="flex items-center justify-center">
-                <Button variant="outline" onClick={downloadTemplate}>
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
                   Download Template
                 </Button>
               </div>
 
-              <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-muted/50 p-4 rounded-lg">
                 <h4 className="font-medium text-sm mb-2">Required Columns:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-xs text-muted-foreground space-y-1">
                   <li>• <strong>Full Name</strong> (required)</li>
-                  <li>• <strong>Date of Birth</strong> (required, format: YYYY-MM-DD)</li>
+                  <li>• <strong>Date of Birth</strong> (YYYY-MM-DD)</li>
                   <li>• <strong>Parent Name</strong> (required)</li>
-                  <li>• <strong>Parent Phone</strong> (required, 10-15 digits)</li>
-                  <li>• <strong>Address</strong> (optional)</li>
-                  <li>• <strong>School Grade</strong> (optional)</li>
-                  <li>• <strong>Attendance Status</strong> (optional, default: "Regular")</li>
-                  <li>• <strong>Notes</strong> (optional)</li>
+                  <li>• <strong>Parent Phone</strong> (required)</li>
+                  <li>• Address, School Grade, Notes (optional)</li>
                 </ul>
               </div>
 
