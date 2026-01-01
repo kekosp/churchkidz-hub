@@ -591,15 +591,15 @@ const Children = () => {
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Input
+              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center">
+                <input
                   type="file"
                   accept=".xlsx,.xls,.csv"
                   onChange={handleFileUpload}
                   disabled={importing}
-                  className="cursor-pointer"
+                  className="block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
                 />
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Supported formats: Excel (.xlsx, .xls) and CSV (.csv)
                 </p>
               </div>
