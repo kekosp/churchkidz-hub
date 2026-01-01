@@ -214,8 +214,14 @@ const Children = () => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File upload triggered");
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+    
+    console.log("File selected:", file.name, file.size, file.type);
 
     // Basic resource limits to prevent abuse and crashes
     const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -229,6 +235,7 @@ const Children = () => {
 
     setImporting(true);
     setImportResults(null);
+    console.log("Starting import...");
 
     try {
       const data = await file.arrayBuffer();
