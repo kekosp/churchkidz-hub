@@ -232,9 +232,14 @@ const Children = () => {
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { cellFormula: false });
+      const workbook = XLSX.read(data, { 
+        type: 'array', 
+        cellFormula: false,
+        cellDates: true,
+        dateNF: 'yyyy-mm-dd'
+      });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
 
       if (jsonData.length > MAX_ROWS) {
         toast.error(`Too many rows. Maximum is ${MAX_ROWS} rows per import.`);
