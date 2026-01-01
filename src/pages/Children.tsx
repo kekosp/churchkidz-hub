@@ -185,6 +185,34 @@ const Children = () => {
     return noFormula.slice(0, 255);
   };
 
+  const parseExcelDate = (value: unknown): string => {
+    if (value === null || value === undefined || value === "") return "";
+    
+    // If it's already a valid date string (YYYY-MM-DD)
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      // Check if it's already in YYYY-MM-DD format
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return trimmed;
+      }
+      // Try to parse other date formats (DD/MM/YYYY, MM/DD/YYYY, etc.)
+      const parsedDate = new Date(trimmed);
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString().split("T")[0];
+      }
+    }
+    
+    // Excel stores dates as serial numbers (days since 1899-12-30)
+    if (typeof value === "number") {
+      // Excel serial date conversion
+      const excelEpoch = new Date(1899, 11, 30);
+      const date = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
+      return date.toISOString().split("T")[0];
+    }
+    
+    return "";
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -226,9 +254,12 @@ const Children = () => {
       for (let i = 0; i < jsonData.length; i++) {
         const row: any = jsonData[i];
         try {
+          const rawDob = row["Date of Birth"] || row["date_of_birth"] || row["DOB"] || "";
+          const parsedDob = parseExcelDate(rawDob);
+          
           const childData = {
             full_name: sanitizeCell(row["Full Name"] || row["full_name"] || row["Name"] || ""),
-            date_of_birth: sanitizeCell(row["Date of Birth"] || row["date_of_birth"] || row["DOB"] || ""),
+            date_of_birth: parsedDob,
             parent_name: sanitizeCell(row["Parent Name"] || row["parent_name"] || ""),
             parent_phone: sanitizeCell(row["Parent Phone"] || row["parent_phone"] || row["Phone"] || ""),
             address: sanitizeCell(row["Address"] || row["address"] || ""),
