@@ -448,10 +448,10 @@ const Children = () => {
             school_grade: getValue(["school_grade", "grade", "الصف", "المرحلة", "السنة"]),
             attendance_status: getValue(["attendance_status", "status"]) || "Regular",
             notes: getValue(["notes", "ملاحظات"]),
-            servant_id: "",
           };
 
-          const validation = childSchema.safeParse(childData);
+          // Validate without servant_id (it's optional and will default to null in DB)
+          const validation = childSchema.omit({ servant_id: true }).safeParse(childData);
           if (!validation.success) {
             const errorMsg = validation.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(", ");
             errors.push(`Row ${i + 2}: ${errorMsg}`);
