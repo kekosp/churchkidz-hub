@@ -448,7 +448,7 @@ const Children = () => {
             school_grade: getValue(["school_grade", "grade", "الصف", "المرحلة", "السنة"]),
             attendance_status: getValue(["attendance_status", "status"]) || "Regular",
             notes: getValue(["notes", "ملاحظات"]),
-            servant_id: null,
+            servant_id: "",
           };
 
           const validation = childSchema.safeParse(childData);
