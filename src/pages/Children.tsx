@@ -421,13 +421,31 @@ const Children = () => {
             return "";
           };
 
+          const fullName = getValue(["full_name", "name", "الاسم", "اسم", "الاسم_الكامل", "اسم_الطفل"]);
+          const dateOfBirth = parseExcelDate(getValue(["date_of_birth", "dob", "birth", "تاريخ", "تاريخ_الميلاد", "الميلاد"]));
+          const parentName = getValue(["parent_name", "parent", "ولي", "ولي_الأمر", "اسم_ولي_الأمر", "الأب", "الام"]);
+          const parentPhone = getValue(["parent_phone", "phone", "هاتف", "تليفون", "رقم_الهاتف", "موبايل", "الموبايل"]);
+
+          // Show specific missing field errors
+          const missingFields: string[] = [];
+          if (!fullName) missingFields.push("Name/الاسم");
+          if (!dateOfBirth) missingFields.push("Date of Birth/تاريخ الميلاد");
+          if (!parentName) missingFields.push("Parent Name/ولي الأمر");
+          if (!parentPhone) missingFields.push("Phone/هاتف");
+
+          if (missingFields.length > 0) {
+            errors.push(`Row ${i + 2}: Missing fields: ${missingFields.join(", ")}`);
+            failedCount++;
+            continue;
+          }
+
           const childData = {
-            full_name: getValue(["full_name", "name", "الاسم"]),
-            date_of_birth: parseExcelDate(getValue(["date_of_birth", "dob", "birth", "تاريخ"])),
-            parent_name: getValue(["parent_name", "parent", "ولي"]),
-            parent_phone: getValue(["parent_phone", "phone", "هاتف", "تليفون"]),
-            address: getValue(["address", "عنوان"]),
-            school_grade: getValue(["school_grade", "grade", "الصف", "المرحلة"]),
+            full_name: fullName,
+            date_of_birth: dateOfBirth,
+            parent_name: parentName,
+            parent_phone: parentPhone,
+            address: getValue(["address", "عنوان", "العنوان"]),
+            school_grade: getValue(["school_grade", "grade", "الصف", "المرحلة", "السنة"]),
             attendance_status: getValue(["attendance_status", "status"]) || "Regular",
             notes: getValue(["notes", "ملاحظات"]),
             servant_id: null,
@@ -435,7 +453,7 @@ const Children = () => {
 
           const validation = childSchema.safeParse(childData);
           if (!validation.success) {
-            const errorMsg = validation.error.errors.map((e) => e.message).join(", ");
+            const errorMsg = validation.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(", ");
             errors.push(`Row ${i + 2}: ${errorMsg}`);
             failedCount++;
             continue;
