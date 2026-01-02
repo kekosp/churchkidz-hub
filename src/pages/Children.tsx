@@ -473,8 +473,12 @@ const Children = () => {
           }
 
           const dataToInsert: any = { ...childData };
+          // Database requires either parent_id or servant_id to be set
           if (userRole === "parent" && user) {
             dataToInsert.parent_id = user.id;
+          } else if (user) {
+            // For servants/admins, assign themselves as the servant
+            dataToInsert.servant_id = user.id;
           }
 
           const { error } = await supabase.from("children").insert(dataToInsert);
