@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Shield } from "lucide-react";
+import { ArrowLeft, Shield, Key } from "lucide-react";
 import { Database } from "@/lib/supabase-types";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -28,6 +30,11 @@ const ManageRoles = () => {
   const { t, isRTL } = useLanguage();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -129,6 +136,50 @@ const ManageRoles = () => {
     }
   };
 
+  const openPasswordDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordDialogOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+
+    if (newPassword.length < 6) {
+      toast.error(t('manageRoles.passwordTooShort'));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error(t('manageRoles.passwordMismatch'));
+      return;
+    }
+
+    try {
+      setResettingPassword(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke('admin-reset-password', {
+        body: { userId: selectedUser.id, newPassword },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to reset password');
+      }
+
+      toast.success(t('manageRoles.passwordResetSuccess'));
+      setPasswordDialogOpen(false);
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.error("Error resetting password:", error);
+      }
+      toast.error(t('manageRoles.passwordResetError'));
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -173,12 +224,13 @@ const ManageRoles = () => {
                   <TableHead>{t('common.email')}</TableHead>
                   <TableHead>{t('manageRoles.currentRole')}</TableHead>
                   <TableHead>{t('manageRoles.changeRole')}</TableHead>
+                  <TableHead>{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       {t('manageRoles.noUsers')}
                     </TableCell>
                   </TableRow>
@@ -222,6 +274,17 @@ const ManageRoles = () => {
                           </SelectContent>
                         </Select>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openPasswordDialog(u)}
+                          className="gap-2"
+                        >
+                          <Key className="h-4 w-4" />
+                          {t('manageRoles.resetPassword')}
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -245,6 +308,45 @@ const ManageRoles = () => {
             </ul>
           </CardContent>
         </Card>
+
+        <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('manageRoles.resetPasswordTitle')}</DialogTitle>
+              <DialogDescription>
+                {t('manageRoles.resetPasswordDesc')} {selectedUser?.full_name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('manageRoles.newPassword')}</label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder={t('manageRoles.newPasswordPlaceholder')}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('manageRoles.confirmPassword')}</label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder={t('manageRoles.confirmPasswordPlaceholder')}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleResetPassword} disabled={resettingPassword}>
+                {resettingPassword ? t('common.saving') : t('manageRoles.resetPassword')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
