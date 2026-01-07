@@ -262,6 +262,12 @@ const translations: Record<Language, Record<string, string>> = {
     'qr.scanInstructions': 'Point your camera at a QR code to scan',
     'qr.scanSuccess': 'Attendance recorded successfully',
     'qr.scanError': 'Error scanning QR code',
+    'qr.selectMode': 'Select',
+    'qr.selectAll': 'Select All',
+    'qr.deselectAll': 'Deselect All',
+    'qr.downloadSelected': 'Download Selected',
+    'qr.selected': 'selected',
+    'qr.cancelSelection': 'Cancel',
     
     // Roles
     'roles.title': 'Manage Roles',
@@ -543,6 +549,12 @@ const translations: Record<Language, Record<string, string>> = {
     'qr.scanInstructions': 'وجّه الكاميرا نحو رمز QR للمسح',
     'qr.scanSuccess': 'تم تسجيل الحضور بنجاح',
     'qr.scanError': 'خطأ في مسح رمز QR',
+    'qr.selectMode': 'تحديد',
+    'qr.selectAll': 'تحديد الكل',
+    'qr.deselectAll': 'إلغاء تحديد الكل',
+    'qr.downloadSelected': 'تحميل المحدد',
+    'qr.selected': 'محدد',
+    'qr.cancelSelection': 'إلغاء',
     
     // Roles
     'roles.title': 'إدارة الأدوار',
