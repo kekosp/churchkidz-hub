@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useRateLimit } from "@/hooks/useRateLimit";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,13 @@ const Children = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
   const { t, isRTL } = useLanguage();
+  
+  // Rate limiting: max 5 imports per hour per user
+  const { checkRateLimit, recordAttempt, formatRemainingTime } = useRateLimit(
+    "children_import",
+    { maxAttempts: 5, windowMs: 60 * 60 * 1000 } // 1 hour window
+  );
+  
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -215,14 +223,18 @@ const Children = () => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File upload triggered");
     const file = e.target.files?.[0];
     if (!file) {
-      console.log("No file selected");
       return;
     }
-    
-    console.log("File selected:", file.name, file.size, file.type);
+
+    // Check rate limit before processing
+    const { allowed, remainingAttempts } = checkRateLimit();
+    if (!allowed) {
+      toast.error(`Import rate limit exceeded. Please try again in ${formatRemainingTime()}.`);
+      e.target.value = "";
+      return;
+    }
 
     // Basic resource limits to prevent abuse and crashes
     const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -234,9 +246,11 @@ const Children = () => {
       return;
     }
 
+    // Record the import attempt for rate limiting
+    recordAttempt();
+
     setImporting(true);
     setImportResults(null);
-    console.log("Starting import...");
 
     try {
       const data = await file.arrayBuffer();
@@ -349,6 +363,13 @@ const Children = () => {
       return;
     }
 
+    // Check rate limit before processing
+    const { allowed } = checkRateLimit();
+    if (!allowed) {
+      toast.error(`Import rate limit exceeded. Please try again in ${formatRemainingTime()}.`);
+      return;
+    }
+
     // Extract sheet ID from various Google Sheets URL formats
     const sheetIdMatch = googleSheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
     if (!sheetIdMatch) {
@@ -357,6 +378,10 @@ const Children = () => {
     }
 
     const sheetId = sheetIdMatch[1];
+    
+    // Record the import attempt for rate limiting
+    recordAttempt();
+    
     setImporting(true);
     setImportResults(null);
 
