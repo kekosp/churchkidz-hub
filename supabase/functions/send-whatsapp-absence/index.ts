@@ -16,8 +16,10 @@ interface AbsenceNotificationRequest {
 }
 
 // Input validation regex patterns
-// Allow phone numbers starting with + or 0 (for local formats like Egyptian 01x numbers)
-const PHONE_REGEX = /^\+?[0-9]\d{9,14}$/;
+// Strict phone validation:
+// - International format: +{country code}{number} (e.g., +201234567890)
+// - Egyptian mobile format: 01x followed by 8 digits (010, 011, 012, 015)
+const PHONE_REGEX = /^(\+\d{1,3}\d{9,14}|0(10|11|12|15)\d{8})$/;
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{4}$/;
 
 // In-memory rate limiting (free solution)
