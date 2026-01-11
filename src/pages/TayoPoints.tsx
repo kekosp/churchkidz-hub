@@ -105,7 +105,9 @@ const TayoPoints = () => {
       childrenWithPoints.sort((a, b) => b.totalPoints - a.totalPoints);
       setChildren(childrenWithPoints);
     } catch (error) {
-      console.error("Error fetching children with points:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error fetching children with points:", error);
+      }
       toast.error(t('tayo.loadError'));
     } finally {
       setIsLoading(false);
@@ -134,7 +136,9 @@ const TayoPoints = () => {
       setReason("");
       fetchChildrenWithPoints();
     } catch (error) {
-      console.error("Error adding points:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error adding points:", error);
+      }
       toast.error(t('tayo.saveError'));
     }
   };

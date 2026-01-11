@@ -56,14 +56,18 @@ const QRCodes = () => {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching children:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error fetching children:", error);
+        }
         toast.error("Failed to load children");
         return;
       }
 
       setChildren(data || []);
     } catch (error) {
-      console.error("Exception fetching children:", error);
+      if (import.meta.env.DEV) {
+        console.error("Exception fetching children:", error);
+      }
       toast.error("An error occurred");
     } finally {
       setLoading(false);
