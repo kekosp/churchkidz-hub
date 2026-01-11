@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
 import { childSchema } from "@/lib/validation-schemas";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Child {
@@ -255,14 +255,44 @@ const Children = () => {
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { 
-        type: 'array', 
-        cellFormula: false,
-        cellDates: true,
-        dateNF: 'yyyy-mm-dd'
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(data);
+      const worksheet = workbook.worksheets[0];
+      
+      if (!worksheet) {
+        toast.error("No worksheet found in the file.");
+        setImporting(false);
+        e.target.value = "";
+        return;
+      }
+      
+      // Convert worksheet to JSON-like array
+      const jsonData: Record<string, unknown>[] = [];
+      const headerRow = worksheet.getRow(1);
+      const headers: string[] = [];
+      
+      headerRow.eachCell((cell, colNumber) => {
+        headers[colNumber] = cell.value?.toString() || `Column${colNumber}`;
       });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
+      
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // Skip header row
+        const rowData: Record<string, unknown> = {};
+        row.eachCell((cell, colNumber) => {
+          const header = headers[colNumber];
+          if (header) {
+            // Handle date values
+            if (cell.type === ExcelJS.ValueType.Date && cell.value instanceof Date) {
+              rowData[header] = cell.value.toISOString().split('T')[0];
+            } else {
+              rowData[header] = cell.value;
+            }
+          }
+        });
+        if (Object.keys(rowData).length > 0) {
+          jsonData.push(rowData);
+        }
+      });
 
       if (jsonData.length > MAX_ROWS) {
         toast.error(`Too many rows. Maximum is ${MAX_ROWS} rows per import.`);
@@ -536,24 +566,48 @@ const Children = () => {
       setImporting(false);
     }
   };
-  const downloadTemplate = () => {
-    const template = [
-      {
-        "Full Name": "John Doe",
-        "Date of Birth": "2015-05-15",
-        "Parent Name": "Jane Doe",
-        "Parent Phone": "1234567890",
-        "Address": "123 Main St",
-        "School Grade": "Grade 3",
-        "Attendance Status": "Regular",
-        "Notes": "Sample notes"
-      }
+  const downloadTemplate = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Children");
+    
+    // Add headers
+    worksheet.columns = [
+      { header: "Full Name", key: "full_name", width: 25 },
+      { header: "Date of Birth", key: "date_of_birth", width: 15 },
+      { header: "Parent Name", key: "parent_name", width: 25 },
+      { header: "Parent Phone", key: "parent_phone", width: 15 },
+      { header: "Address", key: "address", width: 30 },
+      { header: "School Grade", key: "school_grade", width: 12 },
+      { header: "Attendance Status", key: "attendance_status", width: 18 },
+      { header: "Notes", key: "notes", width: 30 },
     ];
-
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Children");
-    XLSX.writeFile(wb, "children_import_template.xlsx");
+    
+    // Add sample row
+    worksheet.addRow({
+      full_name: "John Doe",
+      date_of_birth: "2015-05-15",
+      parent_name: "Jane Doe",
+      parent_phone: "1234567890",
+      address: "123 Main St",
+      school_grade: "Grade 3",
+      attendance_status: "Regular",
+      notes: "Sample notes",
+    });
+    
+    // Style the header row
+    worksheet.getRow(1).font = { bold: true };
+    
+    // Generate and download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "children_import_template.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const resetForm = () => {
