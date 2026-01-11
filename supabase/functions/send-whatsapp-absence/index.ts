@@ -22,6 +22,54 @@ interface AbsenceNotificationRequest {
 const PHONE_REGEX = /^(\+\d{1,3}\d{9,14}|0(10|11|12|15)\d{8})$/;
 const DATE_REGEX = /^\d{2}\/\d{2}\/\d{4}$/;
 
+// Name validation: Only allow letters (Latin, Arabic, Coptic), spaces, hyphens, apostrophes
+// This prevents injection of URLs, phone numbers, or misleading content
+const NAME_ALLOWED_CHARS = /^[\p{L}\p{M}\s'\-]+$/u;
+
+// Patterns that should be rejected in names (potential injection attempts)
+const SUSPICIOUS_PATTERNS = [
+  /https?:\/\//i,           // URLs
+  /www\./i,                 // Web addresses
+  /\+?\d{7,}/,              // Phone-like numbers (7+ digits)
+  /[\r\n]/,                 // Newlines (could break message formatting)
+  /[<>{}[\]]/,              // HTML/template injection chars
+  /\u202e|\u200f|\u200e/,   // Unicode RTL/LTR override chars (text spoofing)
+];
+
+/**
+ * Sanitize child name to prevent message injection attacks
+ * - Validates against allowed character set (letters, spaces, hyphens, apostrophes)
+ * - Rejects names with suspicious patterns (URLs, phone numbers, etc.)
+ * - Normalizes whitespace
+ */
+function sanitizeChildName(name: string): { valid: boolean; sanitized: string; error?: string } {
+  // Remove leading/trailing whitespace and normalize internal spaces
+  const normalized = name.trim().replace(/\s+/g, ' ');
+  
+  // Check length (2-50 chars is reasonable for a name)
+  if (normalized.length < 2) {
+    return { valid: false, sanitized: '', error: 'Name is too short (minimum 2 characters)' };
+  }
+  if (normalized.length > 50) {
+    return { valid: false, sanitized: '', error: 'Name is too long (maximum 50 characters)' };
+  }
+  
+  // Check for suspicious patterns that indicate injection attempts
+  for (const pattern of SUSPICIOUS_PATTERNS) {
+    if (pattern.test(normalized)) {
+      console.warn('Suspicious pattern detected in childName:', { pattern: pattern.toString(), name: normalized.substring(0, 20) });
+      return { valid: false, sanitized: '', error: 'Name contains invalid characters or patterns' };
+    }
+  }
+  
+  // Validate allowed characters (letters from any script, spaces, hyphens, apostrophes)
+  if (!NAME_ALLOWED_CHARS.test(normalized)) {
+    return { valid: false, sanitized: '', error: 'Name contains invalid characters. Only letters, spaces, hyphens, and apostrophes are allowed' };
+  }
+  
+  return { valid: true, sanitized: normalized };
+}
+
 // In-memory rate limiting (free solution)
 // Limits: 50 requests per user per hour
 const RATE_LIMIT_MAX = 50;
@@ -141,7 +189,7 @@ const handler = async (req: Request): Promise<Response> => {
     const body: AbsenceNotificationRequest = await req.json();
     const { childName, parentPhone, date } = body;
 
-    // Validate childName
+    // Validate and sanitize childName (prevent message injection)
     if (!childName || typeof childName !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Invalid input: childName is required' }),
@@ -149,13 +197,16 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const trimmedName = childName.trim();
-    if (trimmedName.length < 2 || trimmedName.length > 100) {
+    const nameValidation = sanitizeChildName(childName);
+    if (!nameValidation.valid) {
+      console.warn('Invalid childName rejected:', { error: nameValidation.error });
       return new Response(
-        JSON.stringify({ error: 'Invalid input: childName must be between 2 and 100 characters' }),
+        JSON.stringify({ error: `Invalid input: ${nameValidation.error}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    const sanitizedName = nameValidation.sanitized;
 
     // Validate parentPhone
     if (!parentPhone || typeof parentPhone !== 'string' || !PHONE_REGEX.test(parentPhone)) {
@@ -173,7 +224,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('Input validated successfully:', { childName: trimmedName, parentPhone, date });
+    console.log('Input validated successfully:', { childName: sanitizedName, parentPhone, date });
 
     // Format phone number for WhatsApp (must include country code)
     // Handle Egyptian numbers that start with 0 (convert to +20)
@@ -189,7 +240,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log('Phone number formatted:', { original: parentPhone, formatted: formattedPhone });
     
-    const message = `مرحباً، نود إعلامكم بأن ${trimmedName} لم يحضر/تحضر في ${date}. نرجو توضيح السبب إذا أمكن. شكراً لكم.`;
+    const message = `مرحباً، نود إعلامكم بأن ${sanitizedName} لم يحضر/تحضر في ${date}. نرجو توضيح السبب إذا أمكن. شكراً لكم.`;
 
     // Send WhatsApp message via Meta's Cloud API (FREE)
     const whatsappUrl = `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
