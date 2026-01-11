@@ -189,7 +189,8 @@ const Children = () => {
     if (value === null || value === undefined) return "";
     const str = String(value).trim();
     // Strip potential Excel formula prefixes to avoid formula injection when files are reopened
-    const noFormula = str.replace(/^[=+\-@]/, "");
+    // Covers: = + - @ (common) and tab (\t) and carriage return (\r) which can also trigger formulas
+    const noFormula = str.replace(/^[=+\-@\t\r]+/, "");
     // Enforce a reasonable max length to avoid huge cell payloads
     return noFormula.slice(0, 255);
   };
