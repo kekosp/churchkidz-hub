@@ -103,7 +103,9 @@ const QRScanner = () => {
         timestamp: new Date(),
       };
     } catch (error) {
-      console.error("Error recording attendance:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error recording attendance:", error);
+      }
       return {
         childName: "Unknown",
         success: false,
@@ -141,7 +143,9 @@ const QRScanner = () => {
 
       setScanning(true);
     } catch (error) {
-      console.error("Error starting scanner:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error starting scanner:", error);
+      }
       toast.error("Failed to start camera. Please check permissions.");
       scannerRef.current = null;
       setScanning(false);
@@ -153,7 +157,9 @@ const QRScanner = () => {
       try {
         await scannerRef.current.stop();
       } catch (error) {
-        console.error("Error stopping scanner:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error stopping scanner:", error);
+        }
       } finally {
         scannerRef.current = null;
         setScanning(false);

@@ -62,7 +62,9 @@ const ChildReport = () => {
       if (attendanceError) throw attendanceError;
       setAttendanceRecords(attendanceData || []);
     } catch (error: any) {
-      console.error("Error fetching child data:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error fetching child data:", error);
+      }
       toast.error(t('childReport.loadError'));
     } finally {
       setLoading(false);
