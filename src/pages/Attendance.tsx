@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,10 +9,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, Save, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Save, UserCheck, UserX, CloudOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { attendanceSchema } from "@/lib/validation-schemas";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import {
+  savePendingAttendance,
+  getAttendanceByDate,
+  cacheChildren,
+  getCachedChildren,
+  isCacheValid,
+} from "@/lib/offline-db";
+import { setupAutoSync, syncPendingAttendance, SyncResult } from "@/services/attendance-sync";
 
 interface Child {
   id: string;
@@ -29,11 +39,24 @@ const Attendance = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
   const { t, isRTL } = useLanguage();
+  const { isOnline } = useOnlineStatus();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceDate, setServiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [attendance, setAttendance] = useState<Record<string, AttendanceRecord>>({});
   const [saving, setSaving] = useState(false);
+  const [hasOfflineData, setHasOfflineData] = useState(false);
+
+  // Set up auto-sync when coming back online
+  useEffect(() => {
+    const cleanup = setupAutoSync((result: SyncResult) => {
+      if (result.success && result.synced > 0) {
+        toast.success(`Auto-synced ${result.synced} attendance records`);
+        fetchExistingAttendance(); // Refresh to show synced data
+      }
+    });
+    return cleanup;
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -54,59 +77,127 @@ const Attendance = () => {
   const fetchChildren = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("children")
-        .select("id, full_name")
-        .order("full_name") as any;
-
-      if (error) throw error;
-      setChildren(data || []);
       
-      const initialAttendance: Record<string, AttendanceRecord> = {};
-      (data || []).forEach((child: Child) => {
-        initialAttendance[child.id] = {
-          child_id: child.id,
-          present: true,
-          notes: "",
-        };
-      });
-      setAttendance(initialAttendance);
+      if (isOnline) {
+        // Fetch from server
+        const { data, error } = await supabase
+          .from("children")
+          .select("id, full_name")
+          .order("full_name") as any;
+
+        if (error) throw error;
+        
+        const childrenData = data || [];
+        setChildren(childrenData);
+        
+        // Cache children for offline use
+        await cacheChildren(childrenData);
+        
+        initializeAttendance(childrenData);
+      } else {
+        // Load from cache when offline
+        const cacheIsValid = await isCacheValid();
+        if (cacheIsValid) {
+          const cachedChildren = await getCachedChildren();
+          setChildren(cachedChildren);
+          initializeAttendance(cachedChildren);
+          toast.info("Using cached children list (offline mode)");
+        } else {
+          toast.error("No cached data available. Please connect to the internet.");
+        }
+      }
     } catch (error: any) {
-      toast.error("Failed to load children");
-      if (import.meta.env.DEV) {
-        console.error("Error:", error);
+      // Try loading from cache on error
+      const cachedChildren = await getCachedChildren();
+      if (cachedChildren.length > 0) {
+        setChildren(cachedChildren);
+        initializeAttendance(cachedChildren);
+        toast.warning("Using cached data due to connection error");
+      } else {
+        toast.error("Failed to load children");
+        if (import.meta.env.DEV) {
+          console.error("Error:", error);
+        }
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchExistingAttendance = async () => {
+  const initializeAttendance = (childrenData: Child[]) => {
+    const initialAttendance: Record<string, AttendanceRecord> = {};
+    childrenData.forEach((child: Child) => {
+      initialAttendance[child.id] = {
+        child_id: child.id,
+        present: true,
+        notes: "",
+      };
+    });
+    setAttendance(initialAttendance);
+  };
+
+  const fetchExistingAttendance = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("attendance")
-        .select("*")
-        .eq("service_date", serviceDate) as any;
+      // First check for offline data for this date
+      const offlineRecords = await getAttendanceByDate(serviceDate);
+      const hasOffline = offlineRecords.some(r => !r.synced);
+      setHasOfflineData(hasOffline);
 
-      if (error) throw error;
+      if (isOnline) {
+        // Fetch from server
+        const { data, error } = await supabase
+          .from("attendance")
+          .select("*")
+          .eq("service_date", serviceDate) as any;
 
-      if (data && data.length > 0) {
-        const existingAttendance: Record<string, AttendanceRecord> = {};
-        data.forEach((record: any) => {
-          existingAttendance[record.child_id] = {
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const existingAttendance: Record<string, AttendanceRecord> = {};
+          data.forEach((record: any) => {
+            existingAttendance[record.child_id] = {
+              child_id: record.child_id,
+              present: record.present,
+              notes: record.notes || "",
+            };
+          });
+          setAttendance((prev) => ({ ...prev, ...existingAttendance }));
+        }
+      }
+
+      // Apply offline records on top (they take precedence)
+      if (offlineRecords.length > 0) {
+        const offlineAttendance: Record<string, AttendanceRecord> = {};
+        offlineRecords.forEach((record) => {
+          offlineAttendance[record.child_id] = {
             child_id: record.child_id,
             present: record.present,
             notes: record.notes || "",
           };
         });
-        setAttendance((prev) => ({ ...prev, ...existingAttendance }));
+        setAttendance((prev) => ({ ...prev, ...offlineAttendance }));
       }
     } catch (error: any) {
+      // Load from offline storage on error
+      const offlineRecords = await getAttendanceByDate(serviceDate);
+      if (offlineRecords.length > 0) {
+        const offlineAttendance: Record<string, AttendanceRecord> = {};
+        offlineRecords.forEach((record) => {
+          offlineAttendance[record.child_id] = {
+            child_id: record.child_id,
+            present: record.present,
+            notes: record.notes || "",
+          };
+        });
+        setAttendance((prev) => ({ ...prev, ...offlineAttendance }));
+        toast.info("Loaded offline attendance data");
+      }
+      
       if (import.meta.env.DEV) {
         console.error("Error fetching existing attendance:", error);
       }
     }
-  };
+  }, [serviceDate, isOnline]);
 
   const handleAttendanceChange = (childId: string, field: "present" | "notes", value: boolean | string) => {
     setAttendance((prev) => ({
@@ -150,20 +241,51 @@ const Attendance = () => {
         };
       });
 
-      const { error } = await supabase
-        .from("attendance")
-        .upsert(records, {
-          onConflict: "child_id,service_date",
-        }) as any;
+      if (isOnline) {
+        // Try to save directly to server
+        const { error } = await supabase
+          .from("attendance")
+          .upsert(records, {
+            onConflict: "child_id,service_date",
+          }) as any;
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast.success("Attendance saved successfully");
+        // Also sync any pending offline records
+        await syncPendingAttendance();
+        
+        toast.success("Attendance saved successfully");
+        setHasOfflineData(false);
+      } else {
+        // Save to offline storage
+        await savePendingAttendance(records);
+        toast.success("Attendance saved offline. Will sync when online.", {
+          icon: <CloudOff className="h-4 w-4" />,
+        });
+        setHasOfflineData(true);
+      }
     } catch (error: any) {
       if (import.meta.env.DEV) {
         console.error("Error saving attendance:", error);
       }
-      if (error.message.includes("Notes must be")) {
+      
+      // Fallback to offline storage on any error
+      if (!isOnline || error.message.includes("network") || error.message.includes("fetch")) {
+        try {
+          const records = Object.values(attendance).map((record) => ({
+            child_id: record.child_id,
+            service_date: serviceDate,
+            present: record.present,
+            notes: record.notes,
+            recorded_by: user.id,
+          }));
+          await savePendingAttendance(records);
+          toast.warning("Connection failed. Saved offline - will sync later.");
+          setHasOfflineData(true);
+        } catch (offlineError) {
+          toast.error("Unable to save attendance. Please try again.");
+        }
+      } else if (error.message.includes("Notes must be")) {
         toast.error(error.message);
       } else {
         toast.error("Unable to save attendance. Please try again.");
@@ -186,7 +308,7 @@ const Attendance = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
               <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
@@ -196,13 +318,48 @@ const Attendance = () => {
               {userRole === "parent" ? t('dashboard.attendanceHistory') : t('attendance.title')}
             </h1>
           </div>
-          {canEdit && (
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              <Save className="h-4 w-4" />
-              {saving ? t('common.loading') : t('common.save')}
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            <OfflineIndicator onSyncComplete={() => fetchExistingAttendance()} />
+            {canEdit && (
+              <Button onClick={handleSave} disabled={saving} className="gap-2">
+                <Save className="h-4 w-4" />
+                {saving ? t('common.loading') : t('common.save')}
+              </Button>
+            )}
+          </div>
         </div>
+
+        {!isOnline && (
+          <Card className="mb-6 border-warning/50 bg-warning/10">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3 text-warning-foreground">
+                <CloudOff className="h-5 w-5" />
+                <div>
+                  <p className="font-medium">You're offline</p>
+                  <p className="text-sm opacity-80">
+                    Changes will be saved locally and synced when you're back online.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {hasOfflineData && isOnline && (
+          <Card className="mb-6 border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CloudOff className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Unsynced offline data detected</p>
+                  <p className="text-sm text-muted-foreground">
+                    You have attendance records saved offline. Use the Sync button to upload them.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {userRole === "parent" && (
           <Card className="mb-6 border-primary/20 bg-primary/5">
