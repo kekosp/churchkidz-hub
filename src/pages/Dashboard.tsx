@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -172,6 +173,8 @@ const Dashboard = () => {
     parent: t('roles.parent'),
   };
 
+  const showAnalytics = userRole === "admin" || userRole === "servant";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
@@ -191,6 +194,16 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Analytics Dashboard for Admin/Servant */}
+        {showAnalytics && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('analytics.title')}</h2>
+            <AnalyticsDashboard />
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <h2 className="text-2xl font-semibold mb-4">{t('dashboard.title')}</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {cards.map((card, index) => (
             <Card

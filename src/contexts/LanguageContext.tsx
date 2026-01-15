@@ -298,6 +298,26 @@ const translations: Record<Language, Record<string, string>> = {
     'tayo.saveError': 'Failed to save points',
     'tayo.addSuccess': 'Points added successfully',
     'tayo.deductSuccess': 'Points deducted successfully',
+    
+    // Analytics
+    'analytics.title': 'Analytics Overview',
+    'analytics.totalChildren': 'Total Children',
+    'analytics.registeredChildren': 'Registered in the system',
+    'analytics.averageAttendance': 'Average Attendance',
+    'analytics.last30Days': 'Last 30 days',
+    'analytics.presentToday': 'Present Today',
+    'analytics.childrenPresent': 'Children attended',
+    'analytics.absentToday': 'Absent Today',
+    'analytics.childrenAbsent': 'Children missed',
+    'analytics.attendanceTrend': 'Attendance Trend',
+    'analytics.last8Weeks': 'Weekly attendance over the last 8 weeks',
+    'analytics.childrenDistribution': 'Children Distribution',
+    'analytics.byAttendanceStatus': 'By attendance status',
+    'analytics.topAttendance': 'Top Attendance',
+    'analytics.bestAttendingChildren': 'Children with best attendance rates',
+    'analytics.weeklyComparison': 'Weekly Comparison',
+    'analytics.presentVsAbsent': 'Present vs absent by week',
+    'analytics.loadError': 'Failed to load analytics',
   },
   ar: {
     // Common
@@ -585,6 +605,26 @@ const translations: Record<Language, Record<string, string>> = {
     'tayo.saveError': 'فشل في حفظ النقاط',
     'tayo.addSuccess': 'تمت إضافة النقاط بنجاح',
     'tayo.deductSuccess': 'تم خصم النقاط بنجاح',
+    
+    // Analytics
+    'analytics.title': 'نظرة عامة على التحليلات',
+    'analytics.totalChildren': 'إجمالي الأطفال',
+    'analytics.registeredChildren': 'المسجلون في النظام',
+    'analytics.averageAttendance': 'متوسط الحضور',
+    'analytics.last30Days': 'آخر 30 يوماً',
+    'analytics.presentToday': 'الحاضرون اليوم',
+    'analytics.childrenPresent': 'أطفال حضروا',
+    'analytics.absentToday': 'الغائبون اليوم',
+    'analytics.childrenAbsent': 'أطفال غابوا',
+    'analytics.attendanceTrend': 'اتجاه الحضور',
+    'analytics.last8Weeks': 'الحضور الأسبوعي خلال الـ 8 أسابيع الماضية',
+    'analytics.childrenDistribution': 'توزيع الأطفال',
+    'analytics.byAttendanceStatus': 'حسب حالة الحضور',
+    'analytics.topAttendance': 'أفضل حضور',
+    'analytics.bestAttendingChildren': 'الأطفال الأكثر التزاماً بالحضور',
+    'analytics.weeklyComparison': 'المقارنة الأسبوعية',
+    'analytics.presentVsAbsent': 'الحاضرون مقابل الغائبين حسب الأسبوع',
+    'analytics.loadError': 'فشل في تحميل التحليلات',
   },
 };
 
