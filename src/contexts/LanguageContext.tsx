@@ -14,7 +14,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const translations: Record<Language, Record<string, string>> = {
   en: {
     // Common
-    'app.title': 'Church Kids Management',
+    'app.title': 'The Family of Anba Moussa Al-Qawy',
     'app.subtitle': 'A comprehensive system for managing church children activities',
     'common.loading': 'Loading...',
     'common.back': 'Back',
@@ -378,7 +378,7 @@ const translations: Record<Language, Record<string, string>> = {
   },
   ar: {
     // Common
-    'app.title': 'إدارة أطفال الكنيسة',
+    'app.title': 'عائله الانبا موسي القوي',
     'app.subtitle': 'نظام شامل لإدارة أنشطة أطفال الكنيسة',
     'common.loading': 'جاري التحميل...',
     'common.back': 'رجوع',
