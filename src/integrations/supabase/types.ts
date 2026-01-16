@@ -52,6 +52,48 @@ export type Database = {
           },
         ]
       }
+      bug_reports: {
+        Row: {
+          actual_behavior: string | null
+          browser_info: string | null
+          created_at: string
+          description: string
+          expected_behavior: string | null
+          id: string
+          screenshot_url: string | null
+          status: string
+          steps_to_reproduce: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          actual_behavior?: string | null
+          browser_info?: string | null
+          created_at?: string
+          description: string
+          expected_behavior?: string | null
+          id?: string
+          screenshot_url?: string | null
+          status?: string
+          steps_to_reproduce?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          actual_behavior?: string | null
+          browser_info?: string | null
+          created_at?: string
+          description?: string
+          expected_behavior?: string | null
+          id?: string
+          screenshot_url?: string | null
+          status?: string
+          steps_to_reproduce?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       children: {
         Row: {
           address: string | null
