@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy } from "lucide-react";
+import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
@@ -96,6 +96,12 @@ const Dashboard = () => {
       description: t('dashboard.tayoPointsDesc'),
       icon: Trophy,
       href: "/tayo-points",
+    },
+    {
+      title: t('dashboard.bugReports'),
+      description: t('dashboard.bugReportsDesc'),
+      icon: Bug,
+      href: "/bug-reports",
     },
   ];
 
