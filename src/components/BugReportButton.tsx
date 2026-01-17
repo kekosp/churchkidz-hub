@@ -123,9 +123,9 @@ export function BugReportButton() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('bug-screenshots')
-        .getPublicUrl(fileName);
+      // Store the file path instead of public URL (bucket is now private)
+      // The admin page will use signed URLs to view screenshots
+      const screenshotPath = fileName;
 
       // Get browser info
       const browserInfo = `${navigator.userAgent} | Screen: ${window.innerWidth}x${window.innerHeight}`;
@@ -140,7 +140,7 @@ export function BugReportButton() {
           expected_behavior: expectedBehavior.trim() || null,
           actual_behavior: actualBehavior.trim() || null,
           browser_info: browserInfo,
-          screenshot_url: publicUrl,
+          screenshot_url: screenshotPath,
         });
 
       if (insertError) throw insertError;
