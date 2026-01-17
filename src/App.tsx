@@ -18,6 +18,7 @@ import ChildReport from "./pages/ChildReport";
 import ManageRoles from "./pages/ManageRoles";
 import QRCodes from "./pages/QRCodes";
 import QRScanner from "./pages/QRScanner";
+import BulkQRCheckin from "./pages/BulkQRCheckin";
 import TayoPoints from "./pages/TayoPoints";
 import BugReportsAdmin from "./pages/BugReportsAdmin";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/manage-roles" element={<ManageRoles />} />
           <Route path="/qr-codes" element={<QRCodes />} />
           <Route path="/qr-scanner" element={<QRScanner />} />
+          <Route path="/bulk-qr-checkin" element={<BulkQRCheckin />} />
           <Route path="/tayo-points" element={<TayoPoints />} />
           <Route path="/bug-reports" element={<BugReportsAdmin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
