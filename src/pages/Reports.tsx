@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, TrendingUp, Users, Calendar } from "lucide-react";
+import { ArrowLeft, TrendingUp, Users, Calendar, BarChart3, FileText } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 
 interface ChildStats {
   id: string;
@@ -108,6 +110,8 @@ const Reports = () => {
     );
   }
 
+  const showAnalytics = userRole === "admin" || userRole === "servant";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
@@ -119,93 +123,204 @@ const Reports = () => {
           <h1 className="text-3xl font-bold">{t('reports.title')}</h1>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalChildren}</div>
-              <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
-            </CardContent>
-          </Card>
+        {showAnalytics ? (
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="analytics" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                {t('analytics.title')}
+              </TabsTrigger>
+              <TabsTrigger value="details" className="gap-2">
+                <FileText className="h-4 w-4" />
+                {t('reports.individualStats')}
+              </TabsTrigger>
+            </TabsList>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{averageAttendance}%</div>
-              <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
-            </CardContent>
-          </Card>
+            <TabsContent value="analytics" className="space-y-6">
+              <AnalyticsDashboard />
+            </TabsContent>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
+            <TabsContent value="details" className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-3 mb-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{totalChildren}</div>
+                    <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{averageAttendance}%</div>
+                    <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
+                  </CardContent>
+                </Card>
               </div>
-              <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
-            </CardContent>
-          </Card>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('reports.individualStats')}</CardTitle>
-            <CardDescription>{t('reports.detailedBreakdown')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('reports.childName')}</TableHead>
-                    <TableHead className="text-center">{t('reports.totalServices')}</TableHead>
-                    <TableHead className="text-center">{t('reports.attended')}</TableHead>
-                    <TableHead className="text-center">{t('reports.attendanceRate')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stats.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground">
-                        {t('reports.noData')}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    stats.map((stat) => (
-                      <TableRow key={stat.id}>
-                        <TableCell className="font-medium">{stat.full_name}</TableCell>
-                        <TableCell className="text-center">{stat.total_services}</TableCell>
-                        <TableCell className="text-center">{stat.attended}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge
-                            variant={
-                              stat.attendance_percentage >= 80
-                                ? "default"
-                                : stat.attendance_percentage >= 50
-                                ? "secondary"
-                                : "outline"
-                            }
-                          >
-                            {stat.attendance_percentage}%
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('reports.individualStats')}</CardTitle>
+                  <CardDescription>{t('reports.detailedBreakdown')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('reports.childName')}</TableHead>
+                          <TableHead className="text-center">{t('reports.totalServices')}</TableHead>
+                          <TableHead className="text-center">{t('reports.attended')}</TableHead>
+                          <TableHead className="text-center">{t('reports.attendanceRate')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {stats.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-muted-foreground">
+                              {t('reports.noData')}
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          stats.map((stat) => (
+                            <TableRow key={stat.id}>
+                              <TableCell className="font-medium">{stat.full_name}</TableCell>
+                              <TableCell className="text-center">{stat.total_services}</TableCell>
+                              <TableCell className="text-center">{stat.attended}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge
+                                  variant={
+                                    stat.attendance_percentage >= 80
+                                      ? "default"
+                                      : stat.attendance_percentage >= 50
+                                      ? "secondary"
+                                      : "outline"
+                                  }
+                                >
+                                  {stat.attendance_percentage}%
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <>
+            <div className="grid gap-6 md:grid-cols-3 mb-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalChildren}</div>
+                  <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{averageAttendance}%</div>
+                  <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('reports.individualStats')}</CardTitle>
+                <CardDescription>{t('reports.detailedBreakdown')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('reports.childName')}</TableHead>
+                        <TableHead className="text-center">{t('reports.totalServices')}</TableHead>
+                        <TableHead className="text-center">{t('reports.attended')}</TableHead>
+                        <TableHead className="text-center">{t('reports.attendanceRate')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {stats.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            {t('reports.noData')}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        stats.map((stat) => (
+                          <TableRow key={stat.id}>
+                            <TableCell className="font-medium">{stat.full_name}</TableCell>
+                            <TableCell className="text-center">{stat.total_services}</TableCell>
+                            <TableCell className="text-center">{stat.attended}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge
+                                variant={
+                                  stat.attendance_percentage >= 80
+                                    ? "default"
+                                    : stat.attendance_percentage >= 50
+                                    ? "secondary"
+                                    : "outline"
+                                }
+                              >
+                                {stat.attendance_percentage}%
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug } from "lucide-react";
+import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug, ScanBarcode } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -66,6 +65,12 @@ const Dashboard = () => {
       description: t('dashboard.qrCodesDesc'),
       icon: QrCode,
       href: "/qr-codes",
+    },
+    {
+      title: t('dashboard.bulkQRCheckin'),
+      description: t('dashboard.bulkQRCheckinDesc'),
+      icon: ScanBarcode,
+      href: "/bulk-qr-checkin",
     },
     {
       title: t('dashboard.viewReports'),
@@ -131,6 +136,12 @@ const Dashboard = () => {
       href: "/qr-codes",
     },
     {
+      title: t('dashboard.bulkQRCheckin'),
+      description: t('dashboard.bulkQRCheckinDesc'),
+      icon: ScanBarcode,
+      href: "/bulk-qr-checkin",
+    },
+    {
       title: t('dashboard.viewReports'),
       description: t('dashboard.viewReportsDesc'),
       icon: BarChart3,
@@ -179,8 +190,6 @@ const Dashboard = () => {
     parent: t('roles.parent'),
   };
 
-  const showAnalytics = userRole === "admin" || userRole === "servant";
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
       <div className="container mx-auto p-6">
@@ -199,14 +208,6 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
-
-        {/* Analytics Dashboard for Admin/Servant */}
-        {showAnalytics && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">{t('analytics.title')}</h2>
-            <AnalyticsDashboard />
-          </div>
-        )}
 
         {/* Quick Actions */}
         <h2 className="text-2xl font-semibold mb-4">{t('dashboard.title')}</h2>
