@@ -28,6 +28,7 @@ interface BugReport {
   updated_at: string;
   user_id: string | null;
   user_email?: string;
+  signed_screenshot_url?: string;
 }
 
 const STATUS_OPTIONS = [
@@ -73,22 +74,35 @@ const BugReportsAdmin = () => {
 
       if (error) throw error;
 
-      // Fetch user emails for each report
-      const reportsWithEmails = await Promise.all(
+      // Fetch user emails and signed screenshot URLs for each report
+      const reportsWithExtras = await Promise.all(
         (data || []).map(async (report) => {
+          let user_email = "Anonymous";
+          let signed_screenshot_url: string | undefined;
+          
+          // Get user email
           if (report.user_id) {
             const { data: profile } = await supabase
               .from("profiles")
               .select("email")
               .eq("id", report.user_id)
               .maybeSingle();
-            return { ...report, user_email: profile?.email || "Unknown" };
+            user_email = profile?.email || "Unknown";
           }
-          return { ...report, user_email: "Anonymous" };
+          
+          // Get signed URL for screenshot (bucket is now private)
+          if (report.screenshot_url) {
+            const { data: signedUrlData } = await supabase.storage
+              .from("bug-screenshots")
+              .createSignedUrl(report.screenshot_url, 3600); // 1 hour expiry
+            signed_screenshot_url = signedUrlData?.signedUrl;
+          }
+          
+          return { ...report, user_email, signed_screenshot_url };
         })
       );
 
-      setBugReports(reportsWithEmails);
+      setBugReports(reportsWithExtras);
     } catch (error) {
       console.error("Error fetching bug reports:", error);
       toast.error(t("bugAdmin.loadError"));
@@ -310,17 +324,17 @@ const BugReportsAdmin = () => {
                                   </div>
 
                                   {/* Screenshot */}
-                                  {report.screenshot_url && (
+                                  {report.signed_screenshot_url && (
                                     <div>
                                       <h4 className="text-sm font-medium mb-2">{t("bugReport.screenshot")}</h4>
                                       <div className="relative group">
                                         <img
-                                          src={report.screenshot_url}
+                                          src={report.signed_screenshot_url}
                                           alt="Bug screenshot"
                                           className="max-w-full rounded-md border"
                                         />
                                         <a
-                                          href={report.screenshot_url}
+                                          href={report.signed_screenshot_url}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="absolute top-2 right-2 bg-background/80 p-2 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
