@@ -42,7 +42,27 @@ const BulkQRCheckin = () => {
   const lastScanTimeRef = useRef<Map<string, number>>(new Map());
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  const playBeep = (type: 'success' | 'error' | 'duplicate') => {
+  const vibrate = (pattern: number | number[]) => {
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate(pattern);
+      } catch {
+        // Vibration not supported
+      }
+    }
+  };
+
+  const playFeedback = (type: 'success' | 'error' | 'duplicate') => {
+    // Vibration patterns: success = short, duplicate = double short, error = long
+    if (type === 'success') {
+      vibrate(100);
+    } else if (type === 'duplicate') {
+      vibrate([50, 50, 50]);
+    } else {
+      vibrate(300);
+    }
+
+    // Audio feedback
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
@@ -71,7 +91,7 @@ const BulkQRCheckin = () => {
       
       oscillator.start(ctx.currentTime);
       oscillator.stop(ctx.currentTime + 0.2);
-    } catch (error) {
+    } catch {
       // Audio not supported, ignore silently
     }
   };
@@ -116,7 +136,7 @@ const BulkQRCheckin = () => {
         .single();
 
       if (childError || !childData) {
-        playBeep('error');
+        playFeedback('error');
         setScannedChildren(prev => [...prev, {
           id: childId,
           name: t('bulkQR.unknownChild'),
@@ -137,7 +157,7 @@ const BulkQRCheckin = () => {
         .maybeSingle();
 
       if (existingAttendance) {
-        playBeep('duplicate');
+        playFeedback('duplicate');
         setScannedChildren(prev => [...prev, {
           id: childId,
           name: childData.full_name,
@@ -147,7 +167,7 @@ const BulkQRCheckin = () => {
         }]);
         toast.info(`${childData.full_name}: ${t('attendance.alreadyRecorded')}`);
       } else {
-        playBeep('success');
+        playFeedback('success');
         setScannedChildren(prev => [...prev, {
           id: childId,
           name: childData.full_name,
