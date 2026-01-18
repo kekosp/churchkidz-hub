@@ -40,6 +40,41 @@ const BulkQRCheckin = () => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannedIdsRef = useRef<Set<string>>(new Set());
   const lastScanTimeRef = useRef<Map<string, number>>(new Map());
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const playBeep = (type: 'success' | 'error' | 'duplicate') => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+      const ctx = audioContextRef.current;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      // Different tones for different statuses
+      if (type === 'success') {
+        oscillator.frequency.value = 880; // A5 - high pleasant tone
+        oscillator.type = 'sine';
+      } else if (type === 'duplicate') {
+        oscillator.frequency.value = 440; // A4 - medium tone
+        oscillator.type = 'sine';
+      } else {
+        oscillator.frequency.value = 220; // A3 - low warning tone
+        oscillator.type = 'triangle';
+      }
+      
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.2);
+    } catch (error) {
+      // Audio not supported, ignore silently
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -81,6 +116,7 @@ const BulkQRCheckin = () => {
         .single();
 
       if (childError || !childData) {
+        playBeep('error');
         setScannedChildren(prev => [...prev, {
           id: childId,
           name: t('bulkQR.unknownChild'),
@@ -101,6 +137,7 @@ const BulkQRCheckin = () => {
         .maybeSingle();
 
       if (existingAttendance) {
+        playBeep('duplicate');
         setScannedChildren(prev => [...prev, {
           id: childId,
           name: childData.full_name,
@@ -110,6 +147,7 @@ const BulkQRCheckin = () => {
         }]);
         toast.info(`${childData.full_name}: ${t('attendance.alreadyRecorded')}`);
       } else {
+        playBeep('success');
         setScannedChildren(prev => [...prev, {
           id: childId,
           name: childData.full_name,
