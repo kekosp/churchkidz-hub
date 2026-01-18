@@ -39,7 +39,7 @@ const BulkQRCheckin = () => {
   const [saving, setSaving] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannedIdsRef = useRef<Set<string>>(new Set());
-  const processingRef = useRef<Set<string>>(new Set());
+  const lastScanTimeRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -55,13 +55,22 @@ const BulkQRCheckin = () => {
   }, [userRole, authLoading, navigate, t]);
 
   const handleQRScan = async (childId: string) => {
-    // Skip if already scanned or currently being processed
-    if (scannedIdsRef.current.has(childId) || processingRef.current.has(childId)) {
+    const now = Date.now();
+    const lastScan = lastScanTimeRef.current.get(childId);
+    
+    // Skip if scanned within the last 3 seconds (debounce)
+    if (lastScan && now - lastScan < 3000) {
+      return;
+    }
+    
+    // Skip if already in our scanned list
+    if (scannedIdsRef.current.has(childId)) {
       return;
     }
 
-    // Mark as processing immediately to prevent duplicate async calls
-    processingRef.current.add(childId);
+    // Mark scan time immediately to prevent duplicate rapid scans
+    lastScanTimeRef.current.set(childId, now);
+    scannedIdsRef.current.add(childId);
 
     try {
       // Get child info
@@ -72,7 +81,6 @@ const BulkQRCheckin = () => {
         .single();
 
       if (childError || !childData) {
-        scannedIdsRef.current.add(childId);
         setScannedChildren(prev => [...prev, {
           id: childId,
           name: t('bulkQR.unknownChild'),
@@ -91,8 +99,6 @@ const BulkQRCheckin = () => {
         .eq("child_id", childId)
         .eq("service_date", today)
         .maybeSingle();
-
-      scannedIdsRef.current.add(childId);
 
       if (existingAttendance) {
         setScannedChildren(prev => [...prev, {
@@ -116,8 +122,6 @@ const BulkQRCheckin = () => {
       if (import.meta.env.DEV) {
         console.error("Error processing QR:", error);
       }
-    } finally {
-      processingRef.current.delete(childId);
     }
   };
 
@@ -174,7 +178,7 @@ const BulkQRCheckin = () => {
   const clearAll = () => {
     setScannedChildren([]);
     scannedIdsRef.current.clear();
-    processingRef.current.clear();
+    lastScanTimeRef.current.clear();
   };
 
   const saveAllAttendance = async () => {
