@@ -42,10 +42,11 @@ const QRCodes = () => {
     try {
       setLoading(true);
       
+      // Use secure view that masks sensitive parent contact info based on user role
       let query = supabase
-        .from("children")
+        .from("children_safe_view" as any)
         .select("id, full_name, parent_name, school_grade")
-        .order("full_name");
+        .order("full_name") as any;
 
       if (userRole === "parent") {
         query = query.eq("parent_id", user?.id);
