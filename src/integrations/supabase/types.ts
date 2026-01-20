@@ -50,6 +50,13 @@ export type Database = {
             referencedRelation: "children"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "attendance_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bug_reports: {
@@ -240,6 +247,13 @@ export type Database = {
             referencedRelation: "children"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tayo_transactions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_safe_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -273,7 +287,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      children_safe_view: {
+        Row: {
+          address: string | null
+          attendance_status: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          full_name: string | null
+          id: string | null
+          notes: string | null
+          parent_id: string | null
+          parent_name: string | null
+          parent_phone: string | null
+          school_grade: string | null
+          servant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: never
+          attendance_status?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          full_name?: string | null
+          id?: string | null
+          notes?: string | null
+          parent_id?: string | null
+          parent_name?: never
+          parent_phone?: never
+          school_grade?: string | null
+          servant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: never
+          attendance_status?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          full_name?: string | null
+          id?: string | null
+          notes?: string | null
+          parent_id?: string | null
+          parent_name?: never
+          parent_phone?: never
+          school_grade?: string | null
+          servant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -283,6 +344,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mask_phone: { Args: { phone_number: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "servant" | "parent"
