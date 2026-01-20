@@ -60,8 +60,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (newPassword.length < 6) {
-      return new Response(JSON.stringify({ error: "Password must be at least 6 characters" }), {
+    // Password validation - must match signup requirements (8+ chars, uppercase, lowercase, number)
+    if (newPassword.length < 8) {
+      return new Response(JSON.stringify({ error: "Password must be at least 8 characters" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      return new Response(JSON.stringify({ error: "Password must contain at least one uppercase letter" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      return new Response(JSON.stringify({ error: "Password must contain at least one lowercase letter" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      return new Response(JSON.stringify({ error: "Password must contain at least one number" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
