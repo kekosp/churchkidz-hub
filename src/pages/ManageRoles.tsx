@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Shield, Key } from "lucide-react";
 import { Database } from "@/lib/supabase-types";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { passwordValidation } from "@/lib/validation-schemas";
 
 type UserRole = Database['public']['Tables']['user_roles']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -146,8 +147,11 @@ const ManageRoles = () => {
   const handleResetPassword = async () => {
     if (!selectedUser) return;
 
-    if (newPassword.length < 6) {
-      toast.error(t('manageRoles.passwordTooShort'));
+    // Use shared password validation schema
+    const validation = passwordValidation.safeParse(newPassword);
+    if (!validation.success) {
+      const errorMessage = validation.error.errors.map(e => e.message).join(". ");
+      toast.error(errorMessage);
       return;
     }
 

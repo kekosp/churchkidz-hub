@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+// Shared password validation - used for both signup and admin reset
+export const passwordValidation = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number");
+
 // Auth validation schemas
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"),
@@ -8,12 +16,7 @@ export const loginSchema = z.object({
 
 export const signupSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+  password: passwordValidation,
   full_name: z
     .string()
     .min(2, "Name must be at least 2 characters")
