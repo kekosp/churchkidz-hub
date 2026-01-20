@@ -44,11 +44,12 @@ const ChildReport = () => {
     try {
       setLoading(true);
 
+      // Use secure view that masks sensitive parent contact info based on user role
       const { data: childData, error: childError } = await supabase
-        .from("children")
+        .from("children_safe_view" as any)
         .select("*")
         .eq("id", childId)
-        .single();
+        .single() as { data: ChildData | null; error: any };
 
       if (childError) throw childError;
       setChild(childData);

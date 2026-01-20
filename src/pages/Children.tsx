@@ -99,8 +99,9 @@ const Children = () => {
   const fetchChildren = async () => {
     try {
       setLoading(true);
+      // Use secure view that masks sensitive parent contact info based on user role
       const { data, error } = await supabase
-        .from("children")
+        .from("children_safe_view" as any)
         .select("*")
         .order("full_name") as any;
 

@@ -61,9 +61,10 @@ const AbsentChildren = () => {
     try {
       setLoading(true);
 
+      // Use secure view that masks sensitive parent contact info based on user role
       const { data: allChildren, error: childrenError } = await supabase
-        .from("children")
-        .select("id, full_name, parent_name, parent_phone, school_grade");
+        .from("children_safe_view" as any)
+        .select("id, full_name, parent_name, parent_phone, school_grade") as { data: AbsentChild[] | null; error: any };
 
       if (childrenError) throw childrenError;
 

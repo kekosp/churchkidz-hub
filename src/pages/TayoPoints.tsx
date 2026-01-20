@@ -64,7 +64,8 @@ const TayoPoints = () => {
       setIsLoading(true);
       
       // Fetch children based on role
-      let childrenQuery = supabase.from("children").select("id, full_name, parent_name, servant_id");
+      // Use secure view that masks sensitive parent contact info based on user role
+      let childrenQuery = supabase.from("children_safe_view" as any).select("id, full_name, parent_name, servant_id") as any;
       
       if (userRole === "parent") {
         childrenQuery = childrenQuery.eq("parent_id", user?.id);
