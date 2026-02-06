@@ -290,39 +290,39 @@ const Attendance = () => {
     }
   };
 
-  if (authLoading || loading) {
+  const canEdit = userRole === "admin" || userRole === "servant";
+
+  const headerActions = (
+    <div className="flex items-center gap-3">
+      <OfflineIndicator onSyncComplete={() => fetchExistingAttendance()} />
+      {canEdit && (
+        <Button onClick={handleSave} disabled={saving} className="gap-2">
+          <Save className="h-4 w-4" />
+          {saving ? t('common.loading') : t('common.save')}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">{t('common.loading')}</div>
-      </div>
+      <AppLayout 
+        title={userRole === "parent" ? t('dashboard.attendanceHistory') : t('attendance.title')}
+        headerActions={headerActions}
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </AppLayout>
     );
   }
 
-  const canEdit = userRole === "admin" || userRole === "servant";
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
-      <div className="container mx-auto p-6">
-        <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
-              <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-              {t('common.back')}
-            </Button>
-            <h1 className="text-3xl font-bold">
-              {userRole === "parent" ? t('dashboard.attendanceHistory') : t('attendance.title')}
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <OfflineIndicator onSyncComplete={() => fetchExistingAttendance()} />
-            {canEdit && (
-              <Button onClick={handleSave} disabled={saving} className="gap-2">
-                <Save className="h-4 w-4" />
-                {saving ? t('common.loading') : t('common.save')}
-              </Button>
-            )}
-          </div>
-        </div>
+    <AppLayout 
+      title={userRole === "parent" ? t('dashboard.attendanceHistory') : t('attendance.title')}
+      headerActions={headerActions}
+    >
+      <div className="space-y-6">
 
         {!isOnline && (
           <Card className="mb-6 border-warning/50 bg-warning/10">
