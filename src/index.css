@@ -147,6 +147,11 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 
+  /* Safe area for iOS devices */
+  .h-safe-bottom {
+    height: env(safe-area-inset-bottom, 0px);
+  }
+
   /* RTL Support */
   html[dir="rtl"] {
     font-family: 'Cairo', 'Work Sans', ui-sans-serif, system-ui, sans-serif;
