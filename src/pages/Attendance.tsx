@@ -58,14 +58,10 @@ const Attendance = () => {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-      return;
-    }
     if (user) {
       fetchChildren();
     }
-  }, [user, authLoading, navigate]);
+  }, [user]);
 
   useEffect(() => {
     if (children.length > 0) {
