@@ -13,10 +13,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Html5Qrcode } from "html5-qrcode";
-import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AppLayout } from "@/components/layout";
 
 interface ScanResult {
   childName: string;
