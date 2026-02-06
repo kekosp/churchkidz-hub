@@ -29,7 +29,7 @@ interface ScanResult {
 const QRScanner = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
