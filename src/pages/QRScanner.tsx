@@ -283,7 +283,6 @@ const QRScanner = () => {
                 </CardContent>
               </Card>
             )}
-          </div>
         </div>
       </AppLayout>
     </>
