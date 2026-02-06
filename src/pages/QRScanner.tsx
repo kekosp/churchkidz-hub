@@ -13,10 +13,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Html5Qrcode } from "html5-qrcode";
-import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AppLayout } from "@/components/layout";
 
 interface ScanResult {
   childName: string;
@@ -28,19 +29,13 @@ interface ScanResult {
 const QRScanner = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingResult, setPendingResult] = useState<ScanResult | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isPausedRef = useRef(false);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (!authLoading && userRole && userRole === "parent") {
@@ -200,14 +195,6 @@ const QRScanner = () => {
     };
   }, [scanning]);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      </div>
-    );
-  }
-
   return (
     <>
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
@@ -221,7 +208,7 @@ const QRScanner = () => {
               <p>{pendingResult?.message}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className={isRTL ? 'flex-row-reverse' : ''}>
+          <AlertDialogFooter>
             <Button variant="outline" onClick={handleCancelScan}>
               {t('common.cancel')}
             </Button>
@@ -232,22 +219,8 @@ const QRScanner = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mb-6 gap-2"
-          >
-            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-            {t('common.back')}
-          </Button>
-
-          <h1 className="text-4xl font-bold mb-8 text-foreground">
-            {t('qr.scanTitle')}
-          </h1>
-
-          <div className="grid gap-6 mb-8">
+      <AppLayout title={t('qr.scanTitle')}>
+        <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>{t('qr.scanInstructions')}</CardTitle>
@@ -310,9 +283,8 @@ const QRScanner = () => {
                 </CardContent>
               </Card>
             )}
-          </div>
         </div>
-      </div>
+      </AppLayout>
     </>
   );
 };

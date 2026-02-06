@@ -1,247 +1,226 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug, ScanBarcode } from "lucide-react";
+import { Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug, ScanBarcode, TrendingUp, Calendar, Clock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { AppLayout } from "@/components/layout";
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+
+interface QuickAction {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  href: string;
+  color: string;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, userRole, loading, signOut } = useAuth();
-  const { t, isRTL } = useLanguage();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
-  }, [user, loading, navigate]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
-  };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">{t('common.loading')}</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const adminCards = [
-    {
-      title: t('dashboard.manageChildren'),
-      description: t('dashboard.manageChildrenDesc'),
-      icon: Users,
-      href: "/children",
-    },
-    {
-      title: t('dashboard.manageServants'),
-      description: t('dashboard.manageServantsDesc'),
-      icon: UserCheck,
-      href: "/servants",
-    },
-    {
-      title: t('dashboard.recordAttendance'),
-      description: t('dashboard.recordAttendanceDesc'),
-      icon: ClipboardList,
-      href: "/attendance",
-    },
-    {
-      title: t('dashboard.scanQR'),
-      description: t('dashboard.scanQRDesc'),
-      icon: ScanLine,
-      href: "/qr-scanner",
-    },
-    {
-      title: t('dashboard.qrCodes'),
-      description: t('dashboard.qrCodesDesc'),
-      icon: QrCode,
-      href: "/qr-codes",
-    },
-    {
-      title: t('dashboard.bulkQRCheckin'),
-      description: t('dashboard.bulkQRCheckinDesc'),
-      icon: ScanBarcode,
-      href: "/bulk-qr-checkin",
-    },
-    {
-      title: t('dashboard.viewReports'),
-      description: t('dashboard.viewReportsDesc'),
-      icon: BarChart3,
-      href: "/reports",
-    },
-    {
-      title: t('dashboard.absentChildren'),
-      description: t('dashboard.absentChildrenDesc'),
-      icon: Users,
-      href: "/absent-children",
-    },
-    {
-      title: t('dashboard.manageRoles'),
-      description: t('dashboard.manageRolesDesc'),
-      icon: Shield,
-      href: "/manage-roles",
-    },
-    {
-      title: t('dashboard.servantAttendance'),
-      description: t('dashboard.servantAttendanceDesc'),
-      icon: UserCog,
-      href: "/servant-attendance",
-    },
-    {
-      title: t('dashboard.tayoPoints'),
-      description: t('dashboard.tayoPointsDesc'),
-      icon: Trophy,
-      href: "/tayo-points",
-    },
-    {
-      title: t('dashboard.bugReports'),
-      description: t('dashboard.bugReportsDesc'),
-      icon: Bug,
-      href: "/bug-reports",
-    },
-  ];
-
-  const servantCards = [
-    {
-      title: t('dashboard.myChildren'),
-      description: t('dashboard.myChildrenDesc'),
-      icon: Users,
-      href: "/children",
-    },
-    {
-      title: t('dashboard.recordAttendance'),
-      description: t('dashboard.recordAttendanceDesc'),
-      icon: ClipboardList,
-      href: "/attendance",
-    },
-    {
-      title: t('dashboard.scanQR'),
-      description: t('dashboard.scanQRDesc'),
-      icon: ScanLine,
-      href: "/qr-scanner",
-    },
-    {
-      title: t('dashboard.qrCodes'),
-      description: t('dashboard.qrCodesDesc'),
-      icon: QrCode,
-      href: "/qr-codes",
-    },
-    {
-      title: t('dashboard.bulkQRCheckin'),
-      description: t('dashboard.bulkQRCheckinDesc'),
-      icon: ScanBarcode,
-      href: "/bulk-qr-checkin",
-    },
-    {
-      title: t('dashboard.viewReports'),
-      description: t('dashboard.viewReportsDesc'),
-      icon: BarChart3,
-      href: "/reports",
-    },
-    {
-      title: t('dashboard.tayoPoints'),
-      description: t('dashboard.tayoPointsDesc'),
-      icon: Trophy,
-      href: "/tayo-points",
-    },
-  ];
-
-  const parentCards = [
-    {
-      title: t('dashboard.myChildren'),
-      description: t('dashboard.myChildrenDesc'),
-      icon: Users,
-      href: "/children",
-    },
-    {
-      title: t('dashboard.qrCodes'),
-      description: t('dashboard.qrCodesDesc'),
-      icon: QrCode,
-      href: "/qr-codes",
-    },
-    {
-      title: t('dashboard.attendanceHistory'),
-      description: t('dashboard.attendanceHistoryDesc'),
-      icon: ClipboardList,
-      href: "/attendance",
-    },
-    {
-      title: t('dashboard.tayoPoints'),
-      description: t('dashboard.tayoPointsDesc'),
-      icon: Trophy,
-      href: "/tayo-points",
-    },
-  ];
-
-  const cards = userRole === "admin" ? adminCards : userRole === "servant" ? servantCards : parentCards;
+  const { user, userRole } = useAuth();
+  const { t } = useLanguage();
 
   const roleTranslations: Record<string, string> = {
-    admin: t('roles.admin'),
-    servant: t('roles.servant'),
-    parent: t('roles.parent'),
+    admin: t("roles.admin"),
+    servant: t("roles.servant"),
+    parent: t("roles.parent"),
   };
 
+  // Quick actions - most used features based on role
+  const adminQuickActions: QuickAction[] = [
+    {
+      title: t("dashboard.recordAttendance"),
+      description: t("dashboard.recordAttendanceDesc"),
+      icon: ClipboardList,
+      href: "/attendance",
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      title: t("dashboard.scanQR"),
+      description: t("dashboard.scanQRDesc"),
+      icon: ScanLine,
+      href: "/qr-scanner",
+      color: "bg-chart-2/20 text-chart-2",
+    },
+    {
+      title: t("dashboard.manageChildren"),
+      description: t("dashboard.manageChildrenDesc"),
+      icon: Users,
+      href: "/children",
+      color: "bg-chart-3/20 text-chart-3",
+    },
+    {
+      title: t("dashboard.viewReports"),
+      description: t("dashboard.viewReportsDesc"),
+      icon: BarChart3,
+      href: "/reports",
+      color: "bg-chart-4/20 text-chart-4",
+    },
+  ];
+
+  const servantQuickActions: QuickAction[] = [
+    {
+      title: t("dashboard.recordAttendance"),
+      description: t("dashboard.recordAttendanceDesc"),
+      icon: ClipboardList,
+      href: "/attendance",
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      title: t("dashboard.scanQR"),
+      description: t("dashboard.scanQRDesc"),
+      icon: ScanLine,
+      href: "/qr-scanner",
+      color: "bg-chart-2/20 text-chart-2",
+    },
+    {
+      title: t("dashboard.myChildren"),
+      description: t("dashboard.myChildrenDesc"),
+      icon: Users,
+      href: "/children",
+      color: "bg-chart-3/20 text-chart-3",
+    },
+    {
+      title: t("dashboard.tayoPoints"),
+      description: t("dashboard.tayoPointsDesc"),
+      icon: Trophy,
+      href: "/tayo-points",
+      color: "bg-chart-4/20 text-chart-4",
+    },
+  ];
+
+  const parentQuickActions: QuickAction[] = [
+    {
+      title: t("dashboard.myChildren"),
+      description: t("dashboard.myChildrenDesc"),
+      icon: Users,
+      href: "/children",
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      title: t("dashboard.qrCodes"),
+      description: t("dashboard.qrCodesDesc"),
+      icon: QrCode,
+      href: "/qr-codes",
+      color: "bg-chart-2/20 text-chart-2",
+    },
+    {
+      title: t("dashboard.attendanceHistory"),
+      description: t("dashboard.attendanceHistoryDesc"),
+      icon: ClipboardList,
+      href: "/attendance",
+      color: "bg-chart-3/20 text-chart-3",
+    },
+    {
+      title: t("dashboard.tayoPoints"),
+      description: t("dashboard.tayoPointsDesc"),
+      icon: Trophy,
+      href: "/tayo-points",
+      color: "bg-chart-4/20 text-chart-4",
+    },
+  ];
+
+  const quickActions =
+    userRole === "admin"
+      ? adminQuickActions
+      : userRole === "servant"
+      ? servantQuickActions
+      : parentQuickActions;
+
+  // Stats cards (placeholder - would be connected to real data)
+  const statsCards = [
+    {
+      title: t("common.present"),
+      value: "—",
+      icon: UserCheck,
+      description: t("dashboard.recordAttendanceDesc"),
+      color: "text-green-600",
+    },
+    {
+      title: t("landing.childrenManagement"),
+      value: "—",
+      icon: Users,
+      description: t("dashboard.manageChildrenDesc"),
+      color: "text-primary",
+    },
+    {
+      title: t("attendance.title"),
+      value: "—",
+      icon: Calendar,
+      description: t("dashboard.viewReportsDesc"),
+      color: "text-chart-3",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
-      <div className="container mx-auto p-6">
-        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold">{t('app.title')}</h1>
-            <p className="text-muted-foreground mt-2">
-              {t('dashboard.welcome')}! {userRole && `${roleTranslations[userRole] || userRole}`}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <LanguageSwitcher />
-            <Button variant="outline" onClick={handleSignOut} className="gap-2">
-              <LogOut className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-              {t('auth.signout')}
-            </Button>
-          </div>
+    <AppLayout title={t("dashboard.title")}>
+      <div className="space-y-6">
+        {/* Welcome Section */}
+        <div className="rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
+          <h2 className="text-2xl font-bold text-foreground">
+            {t("dashboard.welcome")}, {user?.email?.split("@")[0]}!
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {roleTranslations[userRole || ""] || t("dashboard.noRole")}
+          </p>
         </div>
 
-        {/* Quick Actions */}
-        <h2 className="text-2xl font-semibold mb-4">{t('dashboard.title')}</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {cards.map((card, index) => (
-            <Card
-              key={index}
-              className="cursor-pointer transition-all hover:shadow-lg hover:scale-105"
-              onClick={() => navigate(card.href)}
-            >
-              <CardHeader>
+        {/* Stats Overview */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {statsCards.map((stat, index) => (
+            <Card key={index} className="border-0 shadow-sm">
+              <CardContent className="p-4">
                 <div className="flex items-center gap-4">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <card.icon className="h-6 w-6 text-primary" />
+                  <div className={cn("rounded-lg p-2 bg-muted/50", stat.color)}>
+                    <stat.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle>{card.title}</CardTitle>
-                    <CardDescription className="mt-1">{card.description}</CardDescription>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.title}</p>
                   </div>
                 </div>
-              </CardHeader>
+              </CardContent>
             </Card>
           ))}
         </div>
 
+        {/* Quick Actions */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4">{t("dashboard.title")}</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {quickActions.map((action, index) => (
+              <Card
+                key={index}
+                className="cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] border-0 shadow-sm"
+                onClick={() => navigate(action.href)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className={cn("rounded-lg p-3 w-fit", action.color)}>
+                      <action.icon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{action.title}</h4>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {action.description}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* No Role Warning */}
         {!userRole && (
-          <Card className="mt-6 border-warning">
+          <Card className="border-warning bg-warning/10">
             <CardHeader>
-              <CardTitle className="text-warning">{t('dashboard.noRole')}</CardTitle>
+              <CardTitle className="text-warning">{t("dashboard.noRole")}</CardTitle>
             </CardHeader>
           </Card>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

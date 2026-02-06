@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { QRCodeSVG } from "qrcode.react";
-import { ArrowLeft, Download, Check, X } from "lucide-react";
+import { Download, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AppLayout } from "@/components/layout";
 
 interface Child {
   id: string;
@@ -20,23 +21,18 @@ interface Child {
 const QRCodes = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
     if (user && userRole) {
       fetchChildren();
     }
   }, [user, userRole]);
+
 
   const fetchChildren = async () => {
     try {
@@ -141,63 +137,52 @@ const QRCodes = () => {
     setSelectedIds(new Set());
   };
 
-  if (authLoading || loading) {
+  const headerActions = children.length > 0 ? (
+    <div className="flex flex-wrap gap-2">
+      {!isSelecting ? (
+        <Button variant="outline" size="sm" onClick={() => setIsSelecting(true)}>
+          <Check className="h-4 w-4 mr-2" />
+          {t('qr.selectMode')}
+        </Button>
+      ) : (
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={selectedIds.size === children.length ? deselectAll : selectAll}
+          >
+            {selectedIds.size === children.length ? t('qr.deselectAll') : t('qr.selectAll')}
+          </Button>
+          <Button
+            size="sm"
+            onClick={downloadSelectedQRCodes}
+            disabled={selectedIds.size === 0}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {t('qr.downloadSelected')} ({selectedIds.size})
+          </Button>
+          <Button variant="ghost" size="sm" onClick={cancelSelection}>
+            <X className="h-4 w-4 mr-2" />
+            {t('qr.cancelSelection')}
+          </Button>
+        </>
+      )}
+    </div>
+  ) : undefined;
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      </div>
+      <AppLayout title={t('qr.title')} headerActions={headerActions}>
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/dashboard")}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-          {t('common.back')}
-        </Button>
-
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <h1 className="text-4xl font-bold text-foreground">{t('qr.title')}</h1>
-          
-          {children.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {!isSelecting ? (
-                <Button variant="outline" onClick={() => setIsSelecting(true)}>
-                  <Check className="h-4 w-4 mr-2" />
-                  {t('qr.selectMode')}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={selectedIds.size === children.length ? deselectAll : selectAll}
-                  >
-                    {selectedIds.size === children.length ? t('qr.deselectAll') : t('qr.selectAll')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={downloadSelectedQRCodes}
-                    disabled={selectedIds.size === 0}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {t('qr.downloadSelected')} ({selectedIds.size})
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={cancelSelection}>
-                    <X className="h-4 w-4 mr-2" />
-                    {t('qr.cancelSelection')}
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
+    <AppLayout title={t('qr.title')} headerActions={headerActions}>
+      <div className="space-y-6">
         {children.length === 0 ? (
           <Card>
             <CardContent className="py-8">
@@ -265,7 +250,7 @@ const QRCodes = () => {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
