@@ -38,12 +38,6 @@ const QRScanner = () => {
   const isPausedRef = useRef(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
     if (!authLoading && userRole && userRole === "parent") {
       toast.error("Only servants and admins can scan QR codes");
       navigate("/dashboard");
