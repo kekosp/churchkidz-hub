@@ -183,31 +183,6 @@ const QRCodes = () => {
   return (
     <AppLayout title={t('qr.title')} headerActions={headerActions}>
       <div className="space-y-6">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={selectedIds.size === children.length ? deselectAll : selectAll}
-                  >
-                    {selectedIds.size === children.length ? t('qr.deselectAll') : t('qr.selectAll')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={downloadSelectedQRCodes}
-                    disabled={selectedIds.size === 0}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {t('qr.downloadSelected')} ({selectedIds.size})
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={cancelSelection}>
-                    <X className="h-4 w-4 mr-2" />
-                    {t('qr.cancelSelection')}
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
         {children.length === 0 ? (
           <Card>
             <CardContent className="py-8">
