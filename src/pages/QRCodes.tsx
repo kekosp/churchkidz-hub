@@ -250,7 +250,7 @@ const QRCodes = () => {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
