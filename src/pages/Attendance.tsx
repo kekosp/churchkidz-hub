@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,12 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { ArrowLeft, Save, UserCheck, UserX, CloudOff } from "lucide-react";
+import { Save, UserCheck, UserX, CloudOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { attendanceSchema } from "@/lib/validation-schemas";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { AppLayout } from "@/components/layout";
 import {
   savePendingAttendance,
   getAttendanceByDate,
