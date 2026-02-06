@@ -285,7 +285,7 @@ const QRScanner = () => {
             )}
           </div>
         </div>
-      </div>
+      </AppLayout>
     </>
   );
 };
