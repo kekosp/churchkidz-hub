@@ -28,10 +28,10 @@ const QRCodes = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
+    if (user && userRole) {
+      fetchChildren();
     }
-  }, [user, authLoading, navigate]);
+  }, [user, userRole]);
 
   useEffect(() => {
     if (user && userRole) {
