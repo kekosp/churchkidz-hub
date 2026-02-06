@@ -496,7 +496,7 @@ const Attendance = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
