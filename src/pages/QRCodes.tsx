@@ -21,7 +21,7 @@ interface Child {
 const QRCodes = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
