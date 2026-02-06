@@ -33,11 +33,6 @@ const QRCodes = () => {
     }
   }, [user, userRole]);
 
-  useEffect(() => {
-    if (user && userRole) {
-      fetchChildren();
-    }
-  }, [user, userRole]);
 
   const fetchChildren = async () => {
     try {
