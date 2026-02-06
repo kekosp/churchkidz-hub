@@ -195,14 +195,6 @@ const QRScanner = () => {
     };
   }, [scanning]);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      </div>
-    );
-  }
-
   return (
     <>
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
@@ -216,7 +208,7 @@ const QRScanner = () => {
               <p>{pendingResult?.message}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className={isRTL ? 'flex-row-reverse' : ''}>
+          <AlertDialogFooter>
             <Button variant="outline" onClick={handleCancelScan}>
               {t('common.cancel')}
             </Button>
@@ -227,22 +219,8 @@ const QRScanner = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mb-6 gap-2"
-          >
-            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-            {t('common.back')}
-          </Button>
-
-          <h1 className="text-4xl font-bold mb-8 text-foreground">
-            {t('qr.scanTitle')}
-          </h1>
-
-          <div className="grid gap-6 mb-8">
+      <AppLayout title={t('qr.scanTitle')}>
+        <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>{t('qr.scanInstructions')}</CardTitle>
