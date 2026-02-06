@@ -1,16 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, TrendingUp, Users, Calendar, BarChart3, FileText } from "lucide-react";
+import { TrendingUp, Users, Calendar, BarChart3, FileText } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
+import { AppLayout } from "@/components/layout";
 
 interface ChildStats {
   id: string;
@@ -21,23 +20,18 @@ interface ChildStats {
 }
 
 const Reports = () => {
-  const navigate = useNavigate();
-  const { user, userRole, loading: authLoading } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { user, userRole } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ChildStats[]>([]);
   const [totalChildren, setTotalChildren] = useState(0);
   const [averageAttendance, setAverageAttendance] = useState(0);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-      return;
-    }
     if (user) {
       fetchReports();
     }
-  }, [user, authLoading, navigate]);
+  }, [user]);
 
   const fetchReports = async () => {
     try {
@@ -102,27 +96,113 @@ const Reports = () => {
     }
   };
 
-  if (authLoading || loading) {
+  const showAnalytics = userRole === "admin" || userRole === "servant";
+
+  const StatsCards = () => (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalChildren}</div>
+          <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{averageAttendance}%</div>
+          <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
+          </div>
+          <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const StatsTable = () => (
+    <Card className="border-0 shadow-sm">
+      <CardHeader>
+        <CardTitle>{t('reports.individualStats')}</CardTitle>
+        <CardDescription>{t('reports.detailedBreakdown')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('reports.childName')}</TableHead>
+                <TableHead className="text-center">{t('reports.totalServices')}</TableHead>
+                <TableHead className="text-center">{t('reports.attended')}</TableHead>
+                <TableHead className="text-center">{t('reports.attendanceRate')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {stats.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    {t('reports.noData')}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                stats.map((stat) => (
+                  <TableRow key={stat.id}>
+                    <TableCell className="font-medium">{stat.full_name}</TableCell>
+                    <TableCell className="text-center">{stat.total_services}</TableCell>
+                    <TableCell className="text-center">{stat.attended}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant={
+                          stat.attendance_percentage >= 80
+                            ? "default"
+                            : stat.attendance_percentage >= 50
+                            ? "secondary"
+                            : "outline"
+                        }
+                      >
+                        {stat.attendance_percentage}%
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">{t('common.loading')}</div>
-      </div>
+      <AppLayout title={t('reports.title')}>
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </AppLayout>
     );
   }
 
-  const showAnalytics = userRole === "admin" || userRole === "servant";
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
-      <div className="container mx-auto p-6">
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
-            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-            {t('common.back')}
-          </Button>
-          <h1 className="text-3xl font-bold">{t('reports.title')}</h1>
-        </div>
-
+    <AppLayout title={t('reports.title')}>
+      <div className="space-y-6">
         {showAnalytics ? (
           <Tabs defaultValue="analytics" className="space-y-6">
             <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -141,188 +221,18 @@ const Reports = () => {
             </TabsContent>
 
             <TabsContent value="details" className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-3 mb-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{totalChildren}</div>
-                    <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{averageAttendance}%</div>
-                    <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('reports.individualStats')}</CardTitle>
-                  <CardDescription>{t('reports.detailedBreakdown')}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t('reports.childName')}</TableHead>
-                          <TableHead className="text-center">{t('reports.totalServices')}</TableHead>
-                          <TableHead className="text-center">{t('reports.attended')}</TableHead>
-                          <TableHead className="text-center">{t('reports.attendanceRate')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stats.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground">
-                              {t('reports.noData')}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          stats.map((stat) => (
-                            <TableRow key={stat.id}>
-                              <TableCell className="font-medium">{stat.full_name}</TableCell>
-                              <TableCell className="text-center">{stat.total_services}</TableCell>
-                              <TableCell className="text-center">{stat.attended}</TableCell>
-                              <TableCell className="text-center">
-                                <Badge
-                                  variant={
-                                    stat.attendance_percentage >= 80
-                                      ? "default"
-                                      : stat.attendance_percentage >= 50
-                                      ? "secondary"
-                                      : "outline"
-                                  }
-                                >
-                                  {stat.attendance_percentage}%
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
+              <StatsCards />
+              <StatsTable />
             </TabsContent>
           </Tabs>
         ) : (
           <>
-            <div className="grid gap-6 md:grid-cols-3 mb-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalChildren}</div>
-                  <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{averageAttendance}%</div>
-                  <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('reports.individualStats')}</CardTitle>
-                <CardDescription>{t('reports.detailedBreakdown')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('reports.childName')}</TableHead>
-                        <TableHead className="text-center">{t('reports.totalServices')}</TableHead>
-                        <TableHead className="text-center">{t('reports.attended')}</TableHead>
-                        <TableHead className="text-center">{t('reports.attendanceRate')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stats.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            {t('reports.noData')}
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        stats.map((stat) => (
-                          <TableRow key={stat.id}>
-                            <TableCell className="font-medium">{stat.full_name}</TableCell>
-                            <TableCell className="text-center">{stat.total_services}</TableCell>
-                            <TableCell className="text-center">{stat.attended}</TableCell>
-                            <TableCell className="text-center">
-                              <Badge
-                                variant={
-                                  stat.attendance_percentage >= 80
-                                    ? "default"
-                                    : stat.attendance_percentage >= 50
-                                    ? "secondary"
-                                    : "outline"
-                                }
-                              >
-                                {stat.attendance_percentage}%
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            <StatsCards />
+            <StatsTable />
           </>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

@@ -36,9 +36,8 @@ interface AttendanceRecord {
 }
 
 const Attendance = () => {
-  const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const { isOnline } = useOnlineStatus();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
