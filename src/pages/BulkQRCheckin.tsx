@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Html5Qrcode } from "html5-qrcode";
-import { ArrowLeft, CheckCircle, XCircle, Users, Camera, StopCircle, Save, Trash2 } from "lucide-react";
+import { CheckCircle, XCircle, Users, Camera, StopCircle, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AppLayout } from "@/components/layout";
 
 interface ScannedChild {
   id: string;
@@ -53,7 +54,6 @@ const BulkQRCheckin = () => {
   };
 
   const playFeedback = (type: 'success' | 'error' | 'duplicate') => {
-    // Vibration patterns: success = short, duplicate = double short, error = long
     if (type === 'success') {
       vibrate(100);
     } else if (type === 'duplicate') {
@@ -62,7 +62,6 @@ const BulkQRCheckin = () => {
       vibrate(300);
     }
 
-    // Audio feedback
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
@@ -74,15 +73,14 @@ const BulkQRCheckin = () => {
       oscillator.connect(gainNode);
       gainNode.connect(ctx.destination);
       
-      // Different tones for different statuses
       if (type === 'success') {
-        oscillator.frequency.value = 880; // A5 - high pleasant tone
+        oscillator.frequency.value = 880;
         oscillator.type = 'sine';
       } else if (type === 'duplicate') {
-        oscillator.frequency.value = 440; // A4 - medium tone
+        oscillator.frequency.value = 440;
         oscillator.type = 'sine';
       } else {
-        oscillator.frequency.value = 220; // A3 - low warning tone
+        oscillator.frequency.value = 220;
         oscillator.type = 'triangle';
       }
       
@@ -92,15 +90,9 @@ const BulkQRCheckin = () => {
       oscillator.start(ctx.currentTime);
       oscillator.stop(ctx.currentTime + 0.2);
     } catch {
-      // Audio not supported, ignore silently
+      // Audio not supported
     }
   };
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (!authLoading && userRole && userRole === "parent") {
@@ -113,22 +105,13 @@ const BulkQRCheckin = () => {
     const now = Date.now();
     const lastScan = lastScanTimeRef.current.get(childId);
     
-    // Skip if scanned within the last 3 seconds (debounce)
-    if (lastScan && now - lastScan < 3000) {
-      return;
-    }
-    
-    // Skip if already in our scanned list
-    if (scannedIdsRef.current.has(childId)) {
-      return;
-    }
+    if (lastScan && now - lastScan < 3000) return;
+    if (scannedIdsRef.current.has(childId)) return;
 
-    // Mark scan time immediately to prevent duplicate rapid scans
     lastScanTimeRef.current.set(childId, now);
     scannedIdsRef.current.add(childId);
 
     try {
-      // Get child info
       const { data: childData, error: childError } = await supabase
         .from("children")
         .select("full_name")
@@ -147,7 +130,6 @@ const BulkQRCheckin = () => {
         return;
       }
 
-      // Check for existing attendance today
       const today = format(new Date(), "yyyy-MM-dd");
       const { data: existingAttendance } = await supabase
         .from("attendance")
@@ -190,16 +172,9 @@ const BulkQRCheckin = () => {
 
       await scanner.start(
         { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        async (decodedText) => {
-          await handleQRScan(decodedText);
-        },
-        () => {
-          // Ignore scan errors
-        }
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        async (decodedText) => { await handleQRScan(decodedText); },
+        () => {}
       );
 
       setScanning(true);
@@ -264,9 +239,7 @@ const BulkQRCheckin = () => {
             recorded_by: user?.id,
           });
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
         setScannedChildren(prev => 
           prev.map(c => c.id === child.id ? { ...c, status: 'saved' as const } : c)
@@ -286,12 +259,8 @@ const BulkQRCheckin = () => {
     setSaving(false);
     setShowSaveDialog(false);
 
-    if (successCount > 0) {
-      toast.success(`${t('bulkQR.savedCount')}: ${successCount}`);
-    }
-    if (errorCount > 0) {
-      toast.error(`${t('bulkQR.errorCount')}: ${errorCount}`);
-    }
+    if (successCount > 0) toast.success(`${t('bulkQR.savedCount')}: ${successCount}`);
+    if (errorCount > 0) toast.error(`${t('bulkQR.errorCount')}: ${errorCount}`);
   };
 
   useEffect(() => {
@@ -302,20 +271,12 @@ const BulkQRCheckin = () => {
     };
   }, [scanning]);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      </div>
-    );
-  }
-
   const pendingCount = scannedChildren.filter(c => c.status === 'pending').length;
   const savedCount = scannedChildren.filter(c => c.status === 'saved').length;
   const duplicateCount = scannedChildren.filter(c => c.status === 'duplicate').length;
 
   return (
-    <>
+    <AppLayout title={t('bulkQR.title')} fullWidth>
       <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -327,189 +288,166 @@ const BulkQRCheckin = () => {
           <AlertDialogFooter className={isRTL ? 'flex-row-reverse' : ''}>
             <AlertDialogCancel disabled={saving}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={saveAllAttendance} disabled={saving}>
-              {saving ? t('common.saving') : t('common.save')}
-            </AlertDialogAction>
+              {saving ? t('common.saving') : t('common.save')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mb-6 gap-2"
-          >
-            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-            {t('common.back')}
-          </Button>
-
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                {t('bulkQR.title')}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {t('bulkQR.subtitle')}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Scanner Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Camera className="h-5 w-5" />
-                  {t('bulkQR.scanner')}
-                </CardTitle>
-                <CardDescription>
-                  {t('bulkQR.scannerDesc')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div
-                  id="bulk-qr-reader"
-                  className="w-full max-w-sm mx-auto mb-4 min-h-[250px] bg-muted rounded-lg"
-                ></div>
-                
-                <div className="flex justify-center gap-4">
-                  {!scanning ? (
-                    <Button onClick={startScanning} size="lg" className="gap-2">
-                      <Camera className="h-4 w-4" />
-                      {t('bulkQR.startScanning')}
-                    </Button>
-                  ) : (
-                    <Button onClick={stopScanning} variant="destructive" size="lg" className="gap-2">
-                      <StopCircle className="h-4 w-4" />
-                      {t('bulkQR.stopScanning')}
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Stats Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  {t('bulkQR.scannedChildren')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="text-center p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                    <div className="text-2xl font-bold text-yellow-600">{pendingCount}</div>
-                    <div className="text-xs text-muted-foreground">{t('bulkQR.pending')}</div>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                    <div className="text-2xl font-bold text-green-600">{savedCount}</div>
-                    <div className="text-xs text-muted-foreground">{t('bulkQR.saved')}</div>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <div className="text-2xl font-bold text-blue-600">{duplicateCount}</div>
-                    <div className="text-xs text-muted-foreground">{t('bulkQR.duplicates')}</div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => setShowSaveDialog(true)} 
-                    disabled={pendingCount === 0 || saving}
-                    className="flex-1 gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    {t('bulkQR.saveAll')}
+      <div className="max-w-4xl mx-auto p-4 md:p-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Scanner Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                {t('bulkQR.scanner')}
+              </CardTitle>
+              <CardDescription>
+                {t('bulkQR.scannerDesc')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div
+                id="bulk-qr-reader"
+                className="w-full max-w-sm mx-auto mb-4 min-h-[250px] bg-muted rounded-lg"
+              ></div>
+              
+              <div className="flex justify-center gap-4">
+                {!scanning ? (
+                  <Button onClick={startScanning} size="lg" className="gap-2">
+                    <Camera className="h-4 w-4" />
+                    {t('bulkQR.startScanning')}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={clearAll}
-                    disabled={scannedChildren.length === 0}
-                    className="gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {t('bulkQR.clear')}
+                ) : (
+                  <Button onClick={stopScanning} variant="destructive" size="lg" className="gap-2">
+                    <StopCircle className="h-4 w-4" />
+                    {t('bulkQR.stopScanning')}
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Scanned List */}
-          {scannedChildren.length > 0 && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>{t('bulkQR.scannedList')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {scannedChildren.map((child, index) => (
-                    <div
-                      key={`${child.id}-${index}`}
-                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                        child.status === 'saved'
-                          ? "border-green-500/20 bg-green-500/5"
-                          : child.status === 'pending'
-                          ? "border-yellow-500/20 bg-yellow-500/5"
-                          : child.status === 'duplicate'
-                          ? "border-blue-500/20 bg-blue-500/5"
-                          : "border-red-500/20 bg-red-500/5"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {child.status === 'saved' && (
-                          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                        )}
-                        {child.status === 'pending' && (
-                          <div className="h-5 w-5 rounded-full border-2 border-yellow-500 flex-shrink-0" />
-                        )}
-                        {child.status === 'duplicate' && (
-                          <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                        )}
-                        {child.status === 'error' && (
-                          <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                        )}
-                        <div>
-                          <p className="font-medium">{child.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(child.timestamp, "h:mm:ss a")}
-                            {child.message && ` - ${child.message}`}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            child.status === 'saved' ? 'default' :
-                            child.status === 'pending' ? 'secondary' :
-                            child.status === 'duplicate' ? 'outline' : 'destructive'
-                          }
-                        >
-                          {child.status === 'saved' && t('bulkQR.saved')}
-                          {child.status === 'pending' && t('bulkQR.pending')}
-                          {child.status === 'duplicate' && t('bulkQR.duplicate')}
-                          {child.status === 'error' && t('bulkQR.error')}
-                        </Badge>
-                        {child.status === 'pending' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeChild(child.id)}
-                          >
-                            <XCircle className="h-4 w-4" />
-                          </Button>
-                        )}
+          {/* Stats Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {t('bulkQR.scannedChildren')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="text-2xl font-bold text-yellow-600">{pendingCount}</div>
+                  <div className="text-xs text-muted-foreground">{t('bulkQR.pending')}</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="text-2xl font-bold text-green-600">{savedCount}</div>
+                  <div className="text-xs text-muted-foreground">{t('bulkQR.saved')}</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="text-2xl font-bold text-blue-600">{duplicateCount}</div>
+                  <div className="text-xs text-muted-foreground">{t('bulkQR.duplicates')}</div>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setShowSaveDialog(true)} 
+                  disabled={pendingCount === 0 || saving}
+                  className="flex-1 gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {t('bulkQR.saveAll')}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={clearAll}
+                  disabled={scannedChildren.length === 0}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t('bulkQR.clear')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Scanned List */}
+        {scannedChildren.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>{t('bulkQR.scannedList')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {scannedChildren.map((child, index) => (
+                  <div
+                    key={`${child.id}-${index}`}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                      child.status === 'saved'
+                        ? "border-green-500/20 bg-green-500/5"
+                        : child.status === 'pending'
+                        ? "border-yellow-500/20 bg-yellow-500/5"
+                        : child.status === 'duplicate'
+                        ? "border-blue-500/20 bg-blue-500/5"
+                        : "border-red-500/20 bg-red-500/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {child.status === 'saved' && (
+                        <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      )}
+                      {child.status === 'pending' && (
+                        <div className="h-5 w-5 rounded-full border-2 border-yellow-500 flex-shrink-0" />
+                      )}
+                      {child.status === 'duplicate' && (
+                        <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                      )}
+                      {child.status === 'error' && (
+                        <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                      )}
+                      <div>
+                        <p className="font-medium">{child.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(child.timestamp, "h:mm:ss a")}
+                          {child.message && ` - ${child.message}`}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          child.status === 'saved' ? 'default' :
+                          child.status === 'pending' ? 'secondary' :
+                          child.status === 'duplicate' ? 'outline' : 'destructive'
+                        }
+                      >
+                        {child.status === 'saved' && t('bulkQR.saved')}
+                        {child.status === 'pending' && t('bulkQR.pending')}
+                        {child.status === 'duplicate' && t('bulkQR.duplicate')}
+                        {child.status === 'error' && t('bulkQR.error')}
+                      </Badge>
+                      {child.status === 'pending' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeChild(child.id)}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </>
+    </AppLayout>
   );
 };
 
