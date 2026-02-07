@@ -10,10 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Shield, Key } from "lucide-react";
+import { Key } from "lucide-react";
 import { Database } from "@/lib/supabase-types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { passwordValidation } from "@/lib/validation-schemas";
+import { AppLayout } from "@/components/layout";
 
 type UserRole = Database['public']['Tables']['user_roles']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -38,14 +39,7 @@ const ManageRoles = () => {
   const [resettingPassword, setResettingPassword] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-      return;
-    }
-    
-    if (authLoading || userRole === null) {
-      return;
-    }
+    if (authLoading || userRole === null) return;
     
     if (userRole === "admin") {
       fetchUsers();
@@ -147,7 +141,6 @@ const ManageRoles = () => {
   const handleResetPassword = async () => {
     if (!selectedUser) return;
 
-    // Use shared password validation schema
     const validation = passwordValidation.safeParse(newPassword);
     if (!validation.success) {
       const errorMessage = validation.error.errors.map(e => e.message).join(". ");
@@ -184,175 +177,154 @@ const ManageRoles = () => {
     }
   };
 
-  if (authLoading || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">{t('common.loading')}</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
-      <div className="container mx-auto p-6">
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
-            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-            {t('common.back')}
-          </Button>
-          <div className="flex items-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">{t('manageRoles.title')}</h1>
+    <AppLayout title={t('manageRoles.title')}>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('roles.title')}</CardTitle>
+          <CardDescription>{t('manageRoles.subtitle')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 rounded-lg bg-muted p-4">
+            <h3 className="font-semibold mb-2">{t('manageRoles.roleDescriptions')}</h3>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li><strong>{t('roles.admin')}:</strong> {t('manageRoles.adminDesc')}</li>
+              <li><strong>{t('roles.servant')}:</strong> {t('manageRoles.servantDesc')}</li>
+              <li><strong>{t('roles.parent')}:</strong> {t('manageRoles.parentDesc')}</li>
+            </ul>
           </div>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('roles.title')}</CardTitle>
-            <CardDescription>{t('manageRoles.subtitle')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 rounded-lg bg-muted p-4">
-              <h3 className="font-semibold mb-2">{t('manageRoles.roleDescriptions')}</h3>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li><strong>{t('roles.admin')}:</strong> {t('manageRoles.adminDesc')}</li>
-                <li><strong>{t('roles.servant')}:</strong> {t('manageRoles.servantDesc')}</li>
-                <li><strong>{t('roles.parent')}:</strong> {t('manageRoles.parentDesc')}</li>
-              </ul>
-            </div>
-
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('common.name')}</TableHead>
+                <TableHead>{t('common.email')}</TableHead>
+                <TableHead>{t('manageRoles.currentRole')}</TableHead>
+                <TableHead>{t('manageRoles.changeRole')}</TableHead>
+                <TableHead>{t('common.actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.length === 0 ? (
                 <TableRow>
-                  <TableHead>{t('common.name')}</TableHead>
-                  <TableHead>{t('common.email')}</TableHead>
-                  <TableHead>{t('manageRoles.currentRole')}</TableHead>
-                  <TableHead>{t('manageRoles.changeRole')}</TableHead>
-                  <TableHead>{t('common.actions')}</TableHead>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    {t('manageRoles.noUsers')}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      {t('manageRoles.noUsers')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  users.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.full_name}</TableCell>
-                      <TableCell dir="ltr">{u.email || "-"}</TableCell>
-                      <TableCell>
-                        {u.role ? (
-                          <Badge
-                            variant={
-                              u.role === "admin"
-                                ? "default"
-                                : u.role === "servant"
-                                ? "secondary"
-                                : "outline"
-                            }
-                          >
-                            {getRoleLabel(u.role)}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">{t('manageRoles.noRole')}</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={u.role || "none"}
-                          onValueChange={(value) =>
-                            handleRoleChange(u.id, value as 'admin' | 'servant' | 'parent' | 'none')
+              ) : (
+                users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.full_name}</TableCell>
+                    <TableCell dir="ltr">{u.email || "-"}</TableCell>
+                    <TableCell>
+                      {u.role ? (
+                        <Badge
+                          variant={
+                            u.role === "admin"
+                              ? "default"
+                              : u.role === "servant"
+                              ? "secondary"
+                              : "outline"
                           }
                         >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">{t('roles.none')}</SelectItem>
-                            <SelectItem value="admin">{t('roles.admin')}</SelectItem>
-                            <SelectItem value="servant">{t('roles.servant')}</SelectItem>
-                            <SelectItem value="parent">{t('roles.parent')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openPasswordDialog(u)}
-                          className="gap-2"
-                        >
-                          <Key className="h-4 w-4" />
-                          {t('manageRoles.resetPassword')}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                          {getRoleLabel(u.role)}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">{t('manageRoles.noRole')}</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={u.role || "none"}
+                        onValueChange={(value) =>
+                          handleRoleChange(u.id, value as 'admin' | 'servant' | 'parent' | 'none')
+                        }
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">{t('roles.none')}</SelectItem>
+                          <SelectItem value="admin">{t('roles.admin')}</SelectItem>
+                          <SelectItem value="servant">{t('roles.servant')}</SelectItem>
+                          <SelectItem value="parent">{t('roles.parent')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openPasswordDialog(u)}
+                        className="gap-2"
+                      >
+                        <Key className="h-4 w-4" />
+                        {t('manageRoles.resetPassword')}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>{t('manageRoles.manualSetup')}</CardTitle>
-            <CardDescription>{t('manageRoles.manualSetupDesc')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>1. Open your Lovable Cloud backend</p>
-            <p>2. Navigate to the <code className="bg-muted px-1 py-0.5 rounded">user_roles</code> table</p>
-            <p>3. Click "Insert row" and add:</p>
-            <ul className={`space-y-1 list-disc ${isRTL ? 'mr-6' : 'ml-6'}`}>
-              <li><strong>user_id:</strong> The user's ID from the profiles table</li>
-              <li><strong>role:</strong> Select admin, servant, or parent</li>
-            </ul>
-          </CardContent>
-        </Card>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>{t('manageRoles.manualSetup')}</CardTitle>
+          <CardDescription>{t('manageRoles.manualSetupDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p>1. Open your Lovable Cloud backend</p>
+          <p>2. Navigate to the <code className="bg-muted px-1 py-0.5 rounded">user_roles</code> table</p>
+          <p>3. Click "Insert row" and add:</p>
+          <ul className={`space-y-1 list-disc ${isRTL ? 'mr-6' : 'ml-6'}`}>
+            <li><strong>user_id:</strong> The user's ID from the profiles table</li>
+            <li><strong>role:</strong> Select admin, servant, or parent</li>
+          </ul>
+        </CardContent>
+      </Card>
 
-        <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('manageRoles.resetPasswordTitle')}</DialogTitle>
-              <DialogDescription>
-                {t('manageRoles.resetPasswordDesc')} {selectedUser?.full_name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('manageRoles.newPassword')}</label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder={t('manageRoles.newPasswordPlaceholder')}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('manageRoles.confirmPassword')}</label>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t('manageRoles.confirmPasswordPlaceholder')}
-                />
-              </div>
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('manageRoles.resetPasswordTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('manageRoles.resetPasswordDesc')} {selectedUser?.full_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('manageRoles.newPassword')}</label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder={t('manageRoles.newPasswordPlaceholder')}
+              />
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
-                {t('common.cancel')}
-              </Button>
-              <Button onClick={handleResetPassword} disabled={resettingPassword}>
-                {resettingPassword ? t('common.saving') : t('manageRoles.resetPassword')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('manageRoles.confirmPassword')}</label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder={t('manageRoles.confirmPasswordPlaceholder')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleResetPassword} disabled={resettingPassword}>
+              {resettingPassword ? t('common.saving') : t('manageRoles.resetPassword')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
   );
 };
 

@@ -13,10 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
 import { childSchema } from "@/lib/validation-schemas";
 import ExcelJS from "exceljs";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AppLayout } from "@/components/layout";
 
 interface Child {
   id: string;
@@ -34,7 +35,7 @@ interface Child {
 
 const Children = () => {
   const navigate = useNavigate();
-  const { user, userRole, loading: authLoading } = useAuth();
+  const { user, userRole } = useAuth();
   const { t, isRTL } = useLanguage();
   
   // Rate limiting: max 5 imports per hour per user
@@ -70,15 +71,11 @@ const Children = () => {
   });
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-      return;
-    }
     if (user) {
       fetchChildren();
       fetchServants();
     }
-  }, [user, authLoading, navigate]);
+  }, [user]);
 
   const fetchServants = async () => {
     try {
@@ -647,390 +644,377 @@ const Children = () => {
     setIsDialogOpen(true);
   };
 
-  if (authLoading || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">{t('common.loading')}</div>
-      </div>
-    );
-  }
-
   const canEdit = userRole === "admin" || userRole === "servant";
 
+  const headerActions = canEdit ? (
+    <div className="flex gap-2">
+      <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="gap-2">
+        <Upload className="h-4 w-4" /> {t('common.export')}
+      </Button>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogTrigger asChild>
+          <Button onClick={handleAddNew} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t('children.addNew')}
+          </Button>
+        </DialogTrigger>
+      </Dialog>
+    </div>
+  ) : undefined;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-accent/10">
-      <div className="container mx-auto p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate("/dashboard")} className="gap-2">
-              <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rtl-flip' : ''}`} />
-              {t('common.back')}
-            </Button>
-            <h1 className="text-3xl font-bold">
-              {userRole === "parent" ? t('dashboard.myChildren') : t('children.title')}
-            </h1>
-          </div>
-          {canEdit && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsImportDialogOpen(true)} className="gap-2">
-                <Upload className="h-4 w-4" /> {t('common.export')}
-              </Button>
-              <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                setIsDialogOpen(open);
-                if (!open) resetForm();
-              }}>
-                <DialogTrigger asChild>
-                  <Button onClick={handleAddNew} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t('children.addNew')}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{editingChild ? t('children.editChild') : t('children.addNew')}</DialogTitle>
-                    <DialogDescription>{t('children.formDescription')}</DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="full_name">{t('children.fullName')} *</Label>
-                        <Input
-                          id="full_name"
-                          value={formData.full_name}
-                          onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="date_of_birth">{t('children.dateOfBirth')} *</Label>
-                        <Input
-                          id="date_of_birth"
-                          type="date"
-                          value={formData.date_of_birth}
-                          onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="parent_name">{t('children.parentName')} *</Label>
-                        <Input
-                          id="parent_name"
-                          value={formData.parent_name}
-                          onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="parent_phone">{t('children.parentPhone')} *</Label>
-                        <Input
-                          id="parent_phone"
-                          type="tel"
-                          value={formData.parent_phone}
-                          onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="address">{t('children.address')}</Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="school_grade">{t('children.schoolGrade')}</Label>
-                        <Input
-                          id="school_grade"
-                          value={formData.school_grade}
-                          onChange={(e) => setFormData({ ...formData, school_grade: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="attendance_status">{t('children.attendanceStatus')}</Label>
-                        <Select
-                          value={formData.attendance_status}
-                          onValueChange={(value) => setFormData({ ...formData, attendance_status: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Regular">{t('children.regular')}</SelectItem>
-                            <SelectItem value="Irregular">{t('children.irregular')}</SelectItem>
-                            <SelectItem value="New">{t('children.new')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {userRole === "admin" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="servant_id">{t('children.assignedServant')}</Label>
-                        <Select
-                          value={formData.servant_id || "_none"}
-                          onValueChange={(value) => setFormData({ ...formData, servant_id: value === "_none" ? "" : value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('children.selectServant')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="_none">{t('children.noServant')}</SelectItem>
-                            {servants.map((servant: any) => (
-                              <SelectItem key={servant.user_id} value={servant.user_id}>
-                                {servant.profiles?.full_name || "Unknown"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">{t('common.notes')}</Label>
-                      <Textarea
-                        id="notes"
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        {t('common.cancel')}
-                      </Button>
-                      <Button type="submit">
-                        {editingChild ? t('common.edit') : t('common.add')}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
-        </div>
-
-        {userRole === "parent" && (
-          <Card className="mb-6 border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-lg">Welcome, Parent!</CardTitle>
-              <CardDescription>
-                Below you can view your children's information. Your children were automatically linked to your account based on your phone number.
-                If you don't see your child listed, please contact an administrator.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
-
-        <Dialog open={isImportDialogOpen} onOpenChange={(open) => {
-          setIsImportDialogOpen(open);
-          if (!open) {
-            setGoogleSheetUrl("");
-            setImportResults(null);
-          }
-        }}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Import Children</DialogTitle>
-              <DialogDescription>
-                Import children from Google Sheets or upload a file.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6">
-              {/* Google Sheets Import */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm flex items-center gap-2">
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">Recommended</span>
-                  Google Sheets
-                </h4>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Paste your Google Sheets URL here..."
-                    value={googleSheetUrl}
-                    onChange={(e) => setGoogleSheetUrl(e.target.value)}
-                    disabled={importing}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleGoogleSheetImport} 
-                    disabled={importing || !googleSheetUrl.trim()}
-                  >
-                    Import
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Make sure your sheet is set to "Anyone with the link can view"
-                </p>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or upload a file</span>
-                </div>
-              </div>
-
-              {/* File Upload */}
-              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 text-center">
-                <input
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={handleFileUpload}
-                  disabled={importing}
-                  className="block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+    <AppLayout
+      title={userRole === "parent" ? t('dashboard.myChildren') : t('children.title')}
+      headerActions={headerActions}
+    >
+      {/* Add/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingChild ? t('children.editChild') : t('children.addNew')}</DialogTitle>
+            <DialogDescription>{t('children.formDescription')}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="full_name">{t('children.fullName')} *</Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  required
                 />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Excel (.xlsx, .xls) or CSV
-                </p>
               </div>
-
-              <div className="flex items-center justify-center">
-                <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                  Download Template
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="date_of_birth">{t('children.dateOfBirth')} *</Label>
+                <Input
+                  id="date_of_birth"
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  required
+                />
               </div>
-
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h4 className="font-medium text-sm mb-2">Required Columns:</h4>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>• <strong>Full Name</strong> (required)</li>
-                  <li>• <strong>Date of Birth</strong> (YYYY-MM-DD)</li>
-                  <li>• <strong>Parent Name</strong> (required)</li>
-                  <li>• <strong>Parent Phone</strong> (required)</li>
-                  <li>• Address, School Grade, Notes (optional)</li>
-                </ul>
-              </div>
-
-              {importing && (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                  <p className="text-sm text-gray-600 mt-2">Importing children...</p>
-                </div>
-              )}
-
-              {importResults && (
-                <div className="space-y-3">
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="font-medium text-green-800">
-                      Successfully imported: {importResults.success} children
-                    </p>
-                  </div>
-                  
-                  {importResults.failed > 0 && (
-                    <div className="bg-red-50 p-4 rounded-lg">
-                      <p className="font-medium text-red-800 mb-2">
-                        Failed to import: {importResults.failed} children
-                      </p>
-                      <div className="max-h-40 overflow-y-auto space-y-1">
-                        {importResults.errors.map((error, idx) => (
-                          <p key={idx} className="text-sm text-red-600">
-                            {error}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Button 
-                    onClick={() => {
-                      setImportResults(null);
-                      setIsImportDialogOpen(false);
-                    }}
-                    className="w-full"
-                  >
-                    Close
-                  </Button>
-                </div>
-              )}
             </div>
-          </DialogContent>
-        </Dialog>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Children List</CardTitle>
-            <CardDescription>View and manage all children in the system</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {children.length === 0 ? (
-              <p className="text-center py-8 text-gray-500">No children found. Add a child to get started.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Date of Birth</TableHead>
-                      <TableHead>Parent</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Grade</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {children.map((child) => (
-                      <TableRow key={child.id}>
-                        <TableCell className="font-medium">{child.full_name}</TableCell>
-                        <TableCell>{child.date_of_birth}</TableCell>
-                        <TableCell>{child.parent_name}</TableCell>
-                        <TableCell>{child.parent_phone}</TableCell>
-                        <TableCell>{child.school_grade || "-"}</TableCell>
-                        <TableCell>
-                          <Badge variant={child.attendance_status === "Regular" ? "default" : "secondary"}>
-                            {child.attendance_status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/child-report/${child.id}`)}
-                            >
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                            {canEdit && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditDialog(child)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDelete(child.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="parent_name">{t('children.parentName')} *</Label>
+                <Input
+                  id="parent_name"
+                  value={formData.parent_name}
+                  onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="parent_phone">{t('children.parentPhone')} *</Label>
+                <Input
+                  id="parent_phone"
+                  type="tel"
+                  value={formData.parent_phone}
+                  onChange={(e) => setFormData({ ...formData, parent_phone: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">{t('children.address')}</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="school_grade">{t('children.schoolGrade')}</Label>
+                <Input
+                  id="school_grade"
+                  value={formData.school_grade}
+                  onChange={(e) => setFormData({ ...formData, school_grade: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="attendance_status">{t('children.attendanceStatus')}</Label>
+                <Select
+                  value={formData.attendance_status}
+                  onValueChange={(value) => setFormData({ ...formData, attendance_status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Regular">{t('children.regular')}</SelectItem>
+                    <SelectItem value="Irregular">{t('children.irregular')}</SelectItem>
+                    <SelectItem value="New">{t('children.new')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {userRole === "admin" && (
+              <div className="space-y-2">
+                <Label htmlFor="servant_id">{t('children.assignedServant')}</Label>
+                <Select
+                  value={formData.servant_id || "_none"}
+                  onValueChange={(value) => setFormData({ ...formData, servant_id: value === "_none" ? "" : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('children.selectServant')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">{t('children.noServant')}</SelectItem>
+                    {servants.map((servant: any) => (
+                      <SelectItem key={servant.user_id} value={servant.user_id}>
+                        {servant.profiles?.full_name || "Unknown"}
+                      </SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
+                  </SelectContent>
+                </Select>
               </div>
             )}
-          </CardContent>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">{t('common.notes')}</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit">
+                {editingChild ? t('common.edit') : t('common.add')}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {userRole === "parent" && (
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg">Welcome, Parent!</CardTitle>
+            <CardDescription>
+              Below you can view your children's information. Your children were automatically linked to your account based on your phone number.
+              If you don't see your child listed, please contact an administrator.
+            </CardDescription>
+          </CardHeader>
         </Card>
-      </div>
-    </div>
+      )}
+
+      <Dialog open={isImportDialogOpen} onOpenChange={(open) => {
+        setIsImportDialogOpen(open);
+        if (!open) {
+          setGoogleSheetUrl("");
+          setImportResults(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import Children</DialogTitle>
+            <DialogDescription>
+              Import children from Google Sheets or upload a file.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">Recommended</span>
+                Google Sheets
+              </h4>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Paste your Google Sheets URL here..."
+                  value={googleSheetUrl}
+                  onChange={(e) => setGoogleSheetUrl(e.target.value)}
+                  disabled={importing}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleGoogleSheetImport} 
+                  disabled={importing || !googleSheetUrl.trim()}
+                >
+                  Import
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Make sure your sheet is set to "Anyone with the link can view"
+              </p>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or upload a file</span>
+              </div>
+            </div>
+
+            <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileUpload}
+                disabled={importing}
+                className="block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Excel (.xlsx, .xls) or CSV
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                Download Template
+              </Button>
+            </div>
+
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <h4 className="font-medium text-sm mb-2">Required Columns:</h4>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• <strong>Full Name</strong> (required)</li>
+                <li>• <strong>Date of Birth</strong> (YYYY-MM-DD)</li>
+                <li>• <strong>Parent Name</strong> (required)</li>
+                <li>• <strong>Parent Phone</strong> (required)</li>
+                <li>• Address, School Grade, Notes (optional)</li>
+              </ul>
+            </div>
+
+            {importing && (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="text-sm text-muted-foreground mt-2">Importing children...</p>
+              </div>
+            )}
+
+            {importResults && (
+              <div className="space-y-3">
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="font-medium text-green-800">
+                    Successfully imported: {importResults.success} children
+                  </p>
+                </div>
+                
+                {importResults.failed > 0 && (
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <p className="font-medium text-red-800 mb-2">
+                      Failed to import: {importResults.failed} children
+                    </p>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {importResults.errors.map((error, idx) => (
+                        <p key={idx} className="text-sm text-red-600">
+                          {error}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Button 
+                  onClick={() => {
+                    setImportResults(null);
+                    setIsImportDialogOpen(false);
+                  }}
+                  className="w-full"
+                >
+                  Close
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Children List</CardTitle>
+          <CardDescription>View and manage all children in the system</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {children.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground">No children found. Add a child to get started.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Date of Birth</TableHead>
+                    <TableHead>Parent</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Grade</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {children.map((child) => (
+                    <TableRow key={child.id}>
+                      <TableCell className="font-medium">{child.full_name}</TableCell>
+                      <TableCell>{child.date_of_birth}</TableCell>
+                      <TableCell>{child.parent_name}</TableCell>
+                      <TableCell>{child.parent_phone}</TableCell>
+                      <TableCell>{child.school_grade || "-"}</TableCell>
+                      <TableCell>
+                        <Badge variant={child.attendance_status === "Regular" ? "default" : "secondary"}>
+                          {child.attendance_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/child-report/${child.id}`)}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                          {canEdit && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditDialog(child)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(child.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </AppLayout>
   );
 };
 
