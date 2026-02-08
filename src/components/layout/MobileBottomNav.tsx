@@ -59,8 +59,8 @@ export function MobileBottomNav() {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80 md:hidden">
+      <div className="flex items-center justify-around px-1 py-1.5">
         {filteredItems.slice(0, 5).map((item) => {
           const active = isActive(item.href);
           return (
@@ -68,14 +68,22 @@ export function MobileBottomNav() {
               key={item.href}
               onClick={() => navigate(item.href)}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[64px]",
+                "flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200 min-w-[60px]",
                 active
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  ? "text-primary nav-active-dot"
+                  : "text-muted-foreground hover:text-foreground active:scale-95"
               )}
             >
-              <item.icon className={cn("h-5 w-5", isRTL && "rtl-flip")} />
-              <span className="text-[10px] font-medium truncate max-w-[56px]">
+              <div className={cn(
+                "p-1.5 rounded-lg transition-all duration-200",
+                active && "bg-primary/10 scale-110"
+              )}>
+                <item.icon className={cn("h-5 w-5", isRTL && "rtl-flip")} />
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium truncate max-w-[56px] transition-all duration-200",
+                active && "font-semibold"
+              )}>
                 {item.title}
               </span>
             </button>

@@ -184,3 +184,42 @@ All colors MUST be HSL.
     flex-direction: row;
   }
 }
+
+@layer utilities {
+  /* Staggered animation delays */
+  .animate-delay-75 { animation-delay: 75ms; }
+  .animate-delay-150 { animation-delay: 150ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+
+  /* Sidebar active indicator bar */
+  .sidebar-active-indicator {
+    position: relative;
+  }
+  .sidebar-active-indicator::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    border-radius: 0 4px 4px 0;
+    background: hsl(var(--primary));
+    animation: fade-in-scale 0.2s ease-out;
+  }
+
+  /* Bottom nav active dot */
+  .nav-active-dot::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: hsl(var(--primary));
+    margin-top: 2px;
+    animation: fade-in-scale 0.2s ease-out;
+  }
+}
