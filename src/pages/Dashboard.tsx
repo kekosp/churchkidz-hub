@@ -1,5 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug, ScanBarcode, TrendingUp, Calendar, Clock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout";
@@ -18,6 +20,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
   const { t } = useLanguage();
+  const { todayPresent, totalChildren, totalAttendanceRecords, loading: statsLoading } = useDashboardStats();
 
   const roleTranslations: Record<string, string> = {
     admin: t("roles.admin"),
@@ -130,21 +133,21 @@ const Dashboard = () => {
   const statsCards = [
     {
       title: t("common.present"),
-      value: "—",
+      value: todayPresent,
       icon: UserCheck,
       description: t("dashboard.recordAttendanceDesc"),
       color: "text-green-600",
     },
     {
       title: t("landing.childrenManagement"),
-      value: "—",
+      value: totalChildren,
       icon: Users,
       description: t("dashboard.manageChildrenDesc"),
       color: "text-primary",
     },
     {
       title: t("attendance.title"),
-      value: "—",
+      value: totalAttendanceRecords,
       icon: Calendar,
       description: t("dashboard.viewReportsDesc"),
       color: "text-chart-3",
@@ -174,7 +177,9 @@ const Dashboard = () => {
                     <stat.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-2xl font-bold">
+                      {statsLoading ? <Skeleton className="h-7 w-10 inline-block" /> : stat.value}
+                    </p>
                     <p className="text-sm text-muted-foreground">{stat.title}</p>
                   </div>
                 </div>
