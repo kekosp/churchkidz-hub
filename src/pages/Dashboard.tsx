@@ -2,7 +2,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug, ScanBarcode, TrendingUp, Calendar, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, UserCheck, ClipboardList, BarChart3, Shield, QrCode, ScanLine, UserCog, Trophy, Bug, ScanBarcode, TrendingUp, Calendar, Clock, RefreshCw } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +21,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
   const { t } = useLanguage();
-  const { todayPresent, totalChildren, totalAttendanceRecords, loading: statsLoading } = useDashboardStats();
+  const { todayPresent, totalChildren, totalAttendanceRecords, loading: statsLoading, lastUpdated, refresh } = useDashboardStats();
 
   const roleTranslations: Record<string, string> = {
     admin: t("roles.admin"),
@@ -168,6 +169,25 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Overview */}
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold">{t("dashboard.title")}</h3>
+          <div className="flex items-center gap-2">
+            {lastUpdated && (
+              <span className="text-xs text-muted-foreground">
+                {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={refresh}
+              disabled={statsLoading}
+              className="h-8 w-8"
+            >
+              <RefreshCw className={cn("h-4 w-4", statsLoading && "animate-spin")} />
+            </Button>
+          </div>
+        </div>
         <div className="grid gap-4 md:grid-cols-3">
           {statsCards.map((stat, index) => (
             <Card key={index} className="border-0 shadow-sm">
