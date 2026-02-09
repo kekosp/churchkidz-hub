@@ -1,5 +1,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -29,6 +30,7 @@ export function AppHeader({ title, children }: AppHeaderProps) {
       
       <div className="flex items-center gap-2">
         {children}
+        <ThemeToggle />
         <LanguageSwitcher />
       </div>
     </header>
