@@ -22,6 +22,7 @@ import QRScanner from "./pages/QRScanner";
 import BulkQRCheckin from "./pages/BulkQRCheckin";
 import TayoPoints from "./pages/TayoPoints";
 import BugReportsAdmin from "./pages/BugReportsAdmin";
+import ChildDashboard from "./pages/ChildDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
           <Route path="/bulk-qr-checkin" element={<BulkQRCheckin />} />
           <Route path="/tayo-points" element={<TayoPoints />} />
           <Route path="/bug-reports" element={<BugReportsAdmin />} />
+          <Route path="/child-dashboard" element={<ChildDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

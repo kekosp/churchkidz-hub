@@ -23,7 +23,7 @@ interface UserWithRole {
   id: string;
   full_name: string;
   email: string | null;
-  role: 'admin' | 'servant' | 'parent' | null;
+  role: 'admin' | 'servant' | 'parent' | 'child' | null;
 }
 
 const ManageRoles = () => {
@@ -86,7 +86,7 @@ const ManageRoles = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: 'admin' | 'servant' | 'parent' | 'none') => {
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'servant' | 'parent' | 'child' | 'none') => {
     try {
       if (newRole === 'none') {
         const { error } = await supabase
@@ -127,6 +127,7 @@ const ManageRoles = () => {
       case 'admin': return t('roles.admin');
       case 'servant': return t('roles.servant');
       case 'parent': return t('roles.parent');
+      case 'child': return t('roles.child');
       default: return role;
     }
   };
@@ -188,9 +189,10 @@ const ManageRoles = () => {
           <div className="mb-4 rounded-lg bg-muted p-4">
             <h3 className="font-semibold mb-2">{t('manageRoles.roleDescriptions')}</h3>
             <ul className="space-y-1 text-sm text-muted-foreground">
-              <li><strong>{t('roles.admin')}:</strong> {t('manageRoles.adminDesc')}</li>
+             <li><strong>{t('roles.admin')}:</strong> {t('manageRoles.adminDesc')}</li>
               <li><strong>{t('roles.servant')}:</strong> {t('manageRoles.servantDesc')}</li>
               <li><strong>{t('roles.parent')}:</strong> {t('manageRoles.parentDesc')}</li>
+              <li><strong>{t('roles.child')}:</strong> {t('manageRoles.childDesc')}</li>
             </ul>
           </div>
 
@@ -237,7 +239,7 @@ const ManageRoles = () => {
                       <Select
                         value={u.role || "none"}
                         onValueChange={(value) =>
-                          handleRoleChange(u.id, value as 'admin' | 'servant' | 'parent' | 'none')
+                          handleRoleChange(u.id, value as 'admin' | 'servant' | 'parent' | 'child' | 'none')
                         }
                       >
                         <SelectTrigger className="w-[180px]">
@@ -248,6 +250,7 @@ const ManageRoles = () => {
                           <SelectItem value="admin">{t('roles.admin')}</SelectItem>
                           <SelectItem value="servant">{t('roles.servant')}</SelectItem>
                           <SelectItem value="parent">{t('roles.parent')}</SelectItem>
+                          <SelectItem value="child">{t('roles.child')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>

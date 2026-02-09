@@ -38,7 +38,7 @@ interface NavItem {
   title: string;
   icon: React.ElementType;
   href: string;
-  roles?: ("admin" | "servant" | "parent")[];
+  roles?: ("admin" | "servant" | "parent" | "child")[];
 }
 
 export function AppSidebar() {
@@ -53,6 +53,99 @@ export function AppSidebar() {
     await signOut();
     navigate("/auth");
   };
+
+  const isActive = (href: string) => location.pathname === href;
+  
+  const filterByRole = (items: NavItem[]) =>
+    items.filter((item) => !item.roles || (userRole && item.roles.includes(userRole)));
+
+  const renderNavItems = (items: NavItem[]) => (
+    <SidebarMenu>
+      {filterByRole(items).map((item, index) => {
+        const active = isActive(item.href);
+        return (
+          <SidebarMenuItem key={item.href}>
+            <SidebarMenuButton
+              onClick={() => navigate(item.href)}
+              className={cn(
+                "w-full justify-start gap-3 rounded-lg transition-all duration-200",
+                active
+                  ? "bg-primary/10 text-primary font-medium sidebar-active-indicator"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground hover:translate-x-0.5"
+              )}
+              tooltip={collapsed ? item.title : undefined}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <item.icon
+                className={cn(
+                  "h-[18px] w-[18px] shrink-0 transition-all duration-200",
+                  active && "scale-110",
+                  isRTL && "rtl-flip"
+                )}
+              />
+              {!collapsed && (
+                <span className="truncate text-sm">{item.title}</span>
+              )}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
+    </SidebarMenu>
+  );
+
+  const userInitials = user?.email?.slice(0, 2).toUpperCase() || "U";
+
+  // Child role gets a simplified navigation
+  if (userRole === "child") {
+    const childNavItems: NavItem[] = [
+      { title: t("childDashboard.title"), icon: LayoutDashboard, href: "/child-dashboard" },
+    ];
+
+    return (
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
+        <SidebarHeader className="border-b border-sidebar-border/50 p-4">
+          <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg shadow-sm transition-transform duration-200 hover:scale-105">
+              🏛️
+            </div>
+            {!collapsed && (
+              <div className="flex flex-col animate-slide-in-left">
+                <span className="font-semibold text-sidebar-foreground tracking-tight">
+                  {t("app.title")}
+                </span>
+                <span className="text-xs text-sidebar-foreground/50 font-medium">
+                  {t('roles.child')}
+                </span>
+              </div>
+            )}
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="px-3 py-4">
+          <SidebarGroup>
+            <SidebarGroupContent>{renderNavItems(childNavItems)}</SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter className="border-t border-sidebar-border/50 p-3">
+          <div className={cn("flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-sidebar-accent/10", collapsed && "justify-center p-1")}>
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-semibold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            {!collapsed && (
+              <div className="flex-1 min-w-0 animate-slide-in-left">
+                <p className="text-sm font-medium truncate text-sidebar-foreground">{user?.email?.split("@")[0]}</p>
+                <p className="text-[11px] text-sidebar-foreground/40 truncate">{user?.email}</p>
+              </div>
+            )}
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="shrink-0 h-8 w-8 text-sidebar-foreground/50 hover:text-destructive hover:bg-destructive/10" title={t("auth.signout")}>
+              <LogOut className={cn("h-4 w-4", isRTL && "rtl-flip")} />
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
 
   const mainNavItems: NavItem[] = [
     {
@@ -142,46 +235,6 @@ export function AppSidebar() {
     },
   ];
 
-  const filterByRole = (items: NavItem[]) =>
-    items.filter((item) => !item.roles || (userRole && item.roles.includes(userRole)));
-
-  const isActive = (href: string) => location.pathname === href;
-
-  const renderNavItems = (items: NavItem[]) => (
-    <SidebarMenu>
-      {filterByRole(items).map((item, index) => {
-        const active = isActive(item.href);
-        return (
-          <SidebarMenuItem key={item.href}>
-            <SidebarMenuButton
-              onClick={() => navigate(item.href)}
-              className={cn(
-                "w-full justify-start gap-3 rounded-lg transition-all duration-200",
-                active
-                  ? "bg-primary/10 text-primary font-medium sidebar-active-indicator"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground hover:translate-x-0.5"
-              )}
-              tooltip={collapsed ? item.title : undefined}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <item.icon
-                className={cn(
-                  "h-[18px] w-[18px] shrink-0 transition-all duration-200",
-                  active && "scale-110",
-                  isRTL && "rtl-flip"
-                )}
-              />
-              {!collapsed && (
-                <span className="truncate text-sm">{item.title}</span>
-              )}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        );
-      })}
-    </SidebarMenu>
-  );
-
-  const userInitials = user?.email?.slice(0, 2).toUpperCase() || "U";
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
