@@ -105,6 +105,7 @@ export type Database = {
         Row: {
           address: string | null
           attendance_status: string | null
+          child_user_id: string | null
           created_at: string
           date_of_birth: string
           full_name: string
@@ -120,6 +121,7 @@ export type Database = {
         Insert: {
           address?: string | null
           attendance_status?: string | null
+          child_user_id?: string | null
           created_at?: string
           date_of_birth: string
           full_name: string
@@ -135,6 +137,7 @@ export type Database = {
         Update: {
           address?: string | null
           attendance_status?: string | null
+          child_user_id?: string | null
           created_at?: string
           date_of_birth?: string
           full_name?: string
@@ -347,7 +350,7 @@ export type Database = {
       mask_phone: { Args: { phone_number: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "servant" | "parent"
+      app_role: "admin" | "servant" | "parent" | "child"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -475,7 +478,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "servant", "parent"],
+      app_role: ["admin", "servant", "parent", "child"],
     },
   },
 } as const

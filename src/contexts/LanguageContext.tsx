@@ -234,6 +234,7 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.adminDesc': 'Full access to all features',
     'manageRoles.servantDesc': 'Can manage assigned children and record attendance',
     'manageRoles.parentDesc': 'Can view their child\'s information and attendance',
+    'manageRoles.childDesc': 'Can view their own QR code, Tayo points, and attendance',
     'manageRoles.currentRole': 'Current Role',
     'manageRoles.changeRole': 'Change Role',
     'manageRoles.noRole': 'No role',
@@ -306,6 +307,7 @@ const translations: Record<Language, Record<string, string>> = {
     'roles.admin': 'Admin',
     'roles.servant': 'Servant',
     'roles.parent': 'Parent',
+    'roles.child': 'Child',
     'roles.none': 'No Role',
     'roles.assignRole': 'Assign Role',
     'roles.currentRole': 'Current Role',
@@ -378,6 +380,18 @@ const translations: Record<Language, Record<string, string>> = {
     'bugReport.confirmTitle': 'Submit Bug Report?',
     'bugReport.confirmDescription': 'Your bug report will be sent to our team for review. Are you ready to submit?',
     'bugReport.confirmSubmit': 'Yes, Submit',
+    
+    // Child Dashboard
+    'childDashboard.title': 'My Dashboard',
+    'childDashboard.loadError': 'Failed to load your data',
+    'childDashboard.notLinked': 'Your account is not linked to a child profile yet. Please contact an administrator.',
+    'childDashboard.myQRCode': 'My QR Code',
+    'childDashboard.qrDesc': 'Show this QR code for attendance check-in',
+    'childDashboard.myProfile': 'My Profile',
+    'childDashboard.pointsHistory': 'Points History',
+    'childDashboard.totalPoints': 'Total Points',
+    'childDashboard.attendanceHistory': 'Attendance History',
+    'childDashboard.attendanceSummary': 'Attended',
     
     // Bug Admin
     'bugAdmin.title': 'Bug Reports Management',
@@ -628,6 +642,7 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.adminDesc': 'وصول كامل لجميع المميزات',
     'manageRoles.servantDesc': 'يمكنه إدارة الأطفال المعينين وتسجيل الحضور',
     'manageRoles.parentDesc': 'يمكنه عرض معلومات وحضور طفله',
+    'manageRoles.childDesc': 'يمكنه عرض رمز QR الخاص به ونقاط طايو وسجل الحضور',
     'manageRoles.currentRole': 'الدور الحالي',
     'manageRoles.changeRole': 'تغيير الدور',
     'manageRoles.noRole': 'بدون دور',
@@ -700,6 +715,7 @@ const translations: Record<Language, Record<string, string>> = {
     'roles.admin': 'مسؤول',
     'roles.servant': 'خادم',
     'roles.parent': 'ولي أمر',
+    'roles.child': 'طفل',
     'roles.none': 'بدون دور',
     'roles.assignRole': 'تعيين دور',
     'roles.currentRole': 'الدور الحالي',
@@ -799,6 +815,18 @@ const translations: Record<Language, Record<string, string>> = {
     'bugAdmin.statusUpdated': 'تم تحديث الحالة بنجاح',
     'bugAdmin.updateError': 'فشل في تحديث الحالة',
     'bugAdmin.browserInfo': 'معلومات المتصفح',
+    
+    // Child Dashboard
+    'childDashboard.title': 'لوحتي',
+    'childDashboard.loadError': 'فشل في تحميل بياناتك',
+    'childDashboard.notLinked': 'حسابك غير مرتبط بملف طفل بعد. يرجى الاتصال بالمسؤول.',
+    'childDashboard.myQRCode': 'رمز QR الخاص بي',
+    'childDashboard.qrDesc': 'أظهر رمز QR هذا لتسجيل الحضور',
+    'childDashboard.myProfile': 'ملفي الشخصي',
+    'childDashboard.pointsHistory': 'سجل النقاط',
+    'childDashboard.totalPoints': 'إجمالي النقاط',
+    'childDashboard.attendanceHistory': 'سجل الحضور',
+    'childDashboard.attendanceSummary': 'حضر',
   },
 };
 

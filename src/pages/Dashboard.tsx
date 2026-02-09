@@ -34,6 +34,12 @@ const Dashboard = () => {
   const { t } = useLanguage();
   const { todayPresent, totalChildren, totalAttendanceRecords, loading: statsLoading, lastUpdated, refresh } = useDashboardStats();
 
+  // Redirect child users to their dedicated dashboard
+  if (userRole === "child") {
+    navigate("/child-dashboard", { replace: true });
+    return null;
+  }
+
   const roleTranslations: Record<string, string> = {
     admin: t("roles.admin"),
     servant: t("roles.servant"),
