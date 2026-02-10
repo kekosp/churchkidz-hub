@@ -28,6 +28,7 @@ const ChildLinkingCard = () => {
   const [childUsers, setChildUsers] = useState<ChildUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchData();
