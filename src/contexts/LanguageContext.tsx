@@ -265,10 +265,10 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.noChildUsers': 'No unlinked Ministered users available',
     'manageRoles.linkAction': 'Link',
     'manageRoles.unlinkAction': 'Unlink',
-    'manageRoles.childLinked': 'Child account linked successfully',
-    'manageRoles.childUnlinked': 'Child account unlinked successfully',
-    'manageRoles.childLinkError': 'Failed to link child account',
-    'manageRoles.childUnlinkError': 'Failed to unlink child account',
+    'manageRoles.childLinked': 'Ministered account linked successfully',
+    'manageRoles.childUnlinked': 'Ministered account unlinked successfully',
+    'manageRoles.childLinkError': 'Failed to link Ministered account',
+    'manageRoles.childUnlinkError': 'Failed to unlink Ministered account',
     
     // QR
     'qr.title': 'QR Codes',
