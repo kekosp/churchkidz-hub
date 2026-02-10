@@ -319,7 +319,7 @@ const translations: Record<Language, Record<string, string>> = {
     'roles.admin': 'Admin',
     'roles.servant': 'Servant',
     'roles.parent': 'Parent',
-    'roles.child': 'Child',
+    'roles.child': 'Ministered',
     'roles.none': 'No Role',
     'roles.assignRole': 'Assign Role',
     'roles.currentRole': 'Current Role',
