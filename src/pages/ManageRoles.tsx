@@ -15,6 +15,7 @@ import { Database } from "@/lib/supabase-types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { passwordValidation } from "@/lib/validation-schemas";
 import { AppLayout } from "@/components/layout";
+import ChildLinkingCard from "@/components/manage-roles/ChildLinkingCard";
 
 type UserRole = Database['public']['Tables']['user_roles']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
