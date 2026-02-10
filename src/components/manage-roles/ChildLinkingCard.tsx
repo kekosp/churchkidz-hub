@@ -210,6 +210,7 @@ const ChildLinkingCard = () => {
               )}
             </TableBody>
           </Table>
+          </>
         )}
       </CardContent>
     </Card>
