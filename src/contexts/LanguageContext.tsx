@@ -396,7 +396,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Child Dashboard
     'childDashboard.title': 'My Dashboard',
     'childDashboard.loadError': 'Failed to load your data',
-    'childDashboard.notLinked': 'Your account is not linked to a child profile yet. Please contact an administrator.',
+    'childDashboard.notLinked': 'Your account is not linked to a Ministered profile yet. Please contact an administrator.',
     'childDashboard.myQRCode': 'My QR Code',
     'childDashboard.qrDesc': 'Show this QR code for attendance check-in',
     'childDashboard.myProfile': 'My Profile',
