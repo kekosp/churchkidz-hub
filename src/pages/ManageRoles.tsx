@@ -274,6 +274,8 @@ const ManageRoles = () => {
         </CardContent>
       </Card>
 
+      <ChildLinkingCard />
+
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>{t('manageRoles.manualSetup')}</CardTitle>

@@ -677,6 +677,18 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.passwordMismatch': 'كلمات المرور غير متطابقة',
     'manageRoles.passwordResetSuccess': 'تم إعادة تعيين كلمة المرور بنجاح',
     'manageRoles.passwordResetError': 'فشل في إعادة تعيين كلمة المرور',
+    'manageRoles.childLinkingTitle': 'ربط حسابات الأطفال',
+    'manageRoles.childLinkingDesc': 'ربط حسابات المستخدمين (بدور طفل) بسجلات الأطفال حتى يتمكنوا من الوصول إلى لوحة التحكم الخاصة بهم',
+    'manageRoles.childRecord': 'سجل الطفل',
+    'manageRoles.linkedAccount': 'الحساب المرتبط',
+    'manageRoles.selectChildUser': 'اختر مستخدم طفل...',
+    'manageRoles.noChildUsers': 'لا يوجد مستخدمون أطفال غير مرتبطين',
+    'manageRoles.linkAction': 'ربط',
+    'manageRoles.unlinkAction': 'إلغاء الربط',
+    'manageRoles.childLinked': 'تم ربط حساب الطفل بنجاح',
+    'manageRoles.childUnlinked': 'تم إلغاء ربط حساب الطفل بنجاح',
+    'manageRoles.childLinkError': 'فشل في ربط حساب الطفل',
+    'manageRoles.childUnlinkError': 'فشل في إلغاء ربط حساب الطفل',
     
     // QR
     'qr.title': 'رموز QR',
