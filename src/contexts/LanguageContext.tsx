@@ -654,7 +654,7 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.adminDesc': 'وصول كامل لجميع المميزات',
     'manageRoles.servantDesc': 'يمكنه إدارة الأطفال المعينين وتسجيل الحضور',
     'manageRoles.parentDesc': 'يمكنه عرض معلومات وحضور طفله',
-    'manageRoles.childDesc': 'يمكنه عرض رمز QR الخاص به ونقاط طايو وسجل الحضور',
+    'manageRoles.childDesc': 'يمكنه عرض رمز QR الخاص به ونقاط طايو وسجل الحضور (مخدوم)',
     'manageRoles.currentRole': 'الدور الحالي',
     'manageRoles.changeRole': 'تغيير الدور',
     'manageRoles.noRole': 'بدون دور',
