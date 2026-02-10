@@ -234,7 +234,7 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.adminDesc': 'Full access to all features',
     'manageRoles.servantDesc': 'Can manage assigned children and record attendance',
     'manageRoles.parentDesc': 'Can view their child\'s information and attendance',
-    'manageRoles.childDesc': 'Can view their own QR code, Tayo points, and attendance',
+    'manageRoles.childDesc': 'Can view their own QR code, Tayo points, and attendance (Ministered)',
     'manageRoles.currentRole': 'Current Role',
     'manageRoles.changeRole': 'Change Role',
     'manageRoles.noRole': 'No role',
