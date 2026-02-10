@@ -685,10 +685,10 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.noChildUsers': 'لا يوجد مستخدمون مخدومون غير مرتبطين',
     'manageRoles.linkAction': 'ربط',
     'manageRoles.unlinkAction': 'إلغاء الربط',
-    'manageRoles.childLinked': 'تم ربط حساب الطفل بنجاح',
-    'manageRoles.childUnlinked': 'تم إلغاء ربط حساب الطفل بنجاح',
-    'manageRoles.childLinkError': 'فشل في ربط حساب الطفل',
-    'manageRoles.childUnlinkError': 'فشل في إلغاء ربط حساب الطفل',
+    'manageRoles.childLinked': 'تم ربط حساب المخدوم بنجاح',
+    'manageRoles.childUnlinked': 'تم إلغاء ربط حساب المخدوم بنجاح',
+    'manageRoles.childLinkError': 'فشل في ربط حساب المخدوم',
+    'manageRoles.childUnlinkError': 'فشل في إلغاء ربط حساب المخدوم',
     
     // QR
     'qr.title': 'رموز QR',
