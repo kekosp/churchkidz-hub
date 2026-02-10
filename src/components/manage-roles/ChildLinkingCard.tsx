@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Link, Unlink } from "lucide-react";
+import { Link, Unlink, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChildRecord {
