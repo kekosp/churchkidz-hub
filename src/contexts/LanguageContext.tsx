@@ -739,7 +739,7 @@ const translations: Record<Language, Record<string, string>> = {
     'roles.admin': 'مسؤول',
     'roles.servant': 'خادم',
     'roles.parent': 'ولي أمر',
-    'roles.child': 'طفل',
+    'roles.child': 'مخدوم',
     'roles.none': 'بدون دور',
     'roles.assignRole': 'تعيين دور',
     'roles.currentRole': 'الدور الحالي',
