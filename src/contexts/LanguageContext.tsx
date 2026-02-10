@@ -257,6 +257,18 @@ const translations: Record<Language, Record<string, string>> = {
     'manageRoles.passwordMismatch': 'Passwords do not match',
     'manageRoles.passwordResetSuccess': 'Password reset successfully',
     'manageRoles.passwordResetError': 'Failed to reset password',
+    'manageRoles.childLinkingTitle': 'Link Child Accounts',
+    'manageRoles.childLinkingDesc': 'Link user accounts (with child role) to child records so they can access their dashboard',
+    'manageRoles.childRecord': 'Child Record',
+    'manageRoles.linkedAccount': 'Linked Account',
+    'manageRoles.selectChildUser': 'Select a child user...',
+    'manageRoles.noChildUsers': 'No unlinked child users available',
+    'manageRoles.linkAction': 'Link',
+    'manageRoles.unlinkAction': 'Unlink',
+    'manageRoles.childLinked': 'Child account linked successfully',
+    'manageRoles.childUnlinked': 'Child account unlinked successfully',
+    'manageRoles.childLinkError': 'Failed to link child account',
+    'manageRoles.childUnlinkError': 'Failed to unlink child account',
     
     // QR
     'qr.title': 'QR Codes',
