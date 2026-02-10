@@ -106,6 +106,10 @@ const ChildLinkingCard = () => {
     (u) => !children.some((c) => c.child_user_id === u.id)
   );
 
+  const filteredChildren = children.filter((child) =>
+    child.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Card className="mt-6">
       <CardHeader>
