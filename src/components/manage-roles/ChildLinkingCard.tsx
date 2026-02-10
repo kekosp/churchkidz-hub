@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Link, Unlink } from "lucide-react";
+import { Link, Unlink, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChildRecord {
@@ -27,6 +28,7 @@ const ChildLinkingCard = () => {
   const [childUsers, setChildUsers] = useState<ChildUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -104,6 +106,10 @@ const ChildLinkingCard = () => {
     (u) => !children.some((c) => c.child_user_id === u.id)
   );
 
+  const filteredChildren = children.filter((child) =>
+    child.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Card className="mt-6">
       <CardHeader>
@@ -114,6 +120,16 @@ const ChildLinkingCard = () => {
         {loading ? (
           <p className="text-muted-foreground text-sm">{t('common.loading')}</p>
         ) : (
+          <>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('common.search')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -123,14 +139,14 @@ const ChildLinkingCard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {children.length === 0 ? (
+              {filteredChildren.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">
                     {t('common.noData')}
                   </TableCell>
                 </TableRow>
               ) : (
-                children.map((child) => (
+                filteredChildren.map((child) => (
                   <TableRow key={child.id}>
                     <TableCell className="font-medium">{child.full_name}</TableCell>
                     <TableCell>
@@ -194,6 +210,7 @@ const ChildLinkingCard = () => {
               )}
             </TableBody>
           </Table>
+          </>
         )}
       </CardContent>
     </Card>
