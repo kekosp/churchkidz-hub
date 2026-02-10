@@ -139,14 +139,14 @@ const ChildLinkingCard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {children.length === 0 ? (
+              {filteredChildren.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">
                     {t('common.noData')}
                   </TableCell>
                 </TableRow>
               ) : (
-                children.map((child) => (
+                filteredChildren.map((child) => (
                   <TableRow key={child.id}>
                     <TableCell className="font-medium">{child.full_name}</TableCell>
                     <TableCell>
