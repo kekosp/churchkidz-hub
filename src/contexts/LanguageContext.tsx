@@ -843,7 +843,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Child Dashboard
     'childDashboard.title': 'لوحتي',
     'childDashboard.loadError': 'فشل في تحميل بياناتك',
-    'childDashboard.notLinked': 'حسابك غير مرتبط بملف طفل بعد. يرجى الاتصال بالمسؤول.',
+    'childDashboard.notLinked': 'حسابك غير مرتبط بملف مخدوم بعد. يرجى الاتصال بالمسؤول.',
     'childDashboard.myQRCode': 'رمز QR الخاص بي',
     'childDashboard.qrDesc': 'أظهر رمز QR هذا لتسجيل الحضور',
     'childDashboard.myProfile': 'ملفي الشخصي',
