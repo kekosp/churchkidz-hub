@@ -15,6 +15,7 @@ import ServantAttendance from "./pages/ServantAttendance";
 import Attendance from "./pages/Attendance";
 import Reports from "./pages/Reports";
 import AbsentChildren from "./pages/AbsentChildren";
+import PresentChildren from "./pages/PresentChildren";
 import ChildReport from "./pages/ChildReport";
 import ManageRoles from "./pages/ManageRoles";
 import QRCodes from "./pages/QRCodes";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/absent-children" element={<AbsentChildren />} />
+          <Route path="/present-children" element={<PresentChildren />} />
           <Route path="/child-report/:childId" element={<ChildReport />} />
           <Route path="/manage-roles" element={<ManageRoles />} />
           <Route path="/qr-codes" element={<QRCodes />} />

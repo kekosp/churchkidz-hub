@@ -165,6 +165,7 @@ const Dashboard = () => {
       icon: UserCheck,
       description: t("dashboard.recordAttendanceDesc"),
       iconColor: "text-primary bg-primary/10",
+      href: "/present-children",
     },
     {
       title: t("landing.childrenManagement"),
@@ -172,6 +173,7 @@ const Dashboard = () => {
       icon: Users,
       description: t("dashboard.manageChildrenDesc"),
       iconColor: "text-chart-3 bg-chart-3/10",
+      href: "/children",
     },
     {
       title: t("attendance.title"),
@@ -179,6 +181,7 @@ const Dashboard = () => {
       icon: Calendar,
       description: t("dashboard.viewReportsDesc"),
       iconColor: "text-chart-2 bg-chart-2/10",
+      href: "/reports",
     },
   ];
 
@@ -223,11 +226,12 @@ const Dashboard = () => {
             <Card
               key={index}
               className={cn(
-                "border-0 shadow-sm hover:shadow-md transition-all duration-300 opacity-0 animate-fade-in-scale",
+                "border-0 shadow-sm hover:shadow-md transition-all duration-300 opacity-0 animate-fade-in-scale cursor-pointer hover:-translate-y-1 active:translate-y-0",
                 index === 0 && "animate-delay-150",
                 index === 1 && "animate-delay-200",
                 index === 2 && "animate-delay-300"
               )}
+              onClick={() => navigate(stat.href)}
             >
               <CardContent className="p-5">
                 <div className="flex items-center gap-4">
