@@ -198,6 +198,16 @@ const translations: Record<Language, Record<string, string>> = {
     'absentChildren.notifyPartialError': 'Failed to send some notifications',
     'absentChildren.noChildren': 'No absent children to notify',
     
+    // Present Children
+    'presentChildren.title': 'Present Children Report',
+    'presentChildren.nonePresent': 'No children present on this date',
+    'presentChildren.presentCount': 'children present',
+    'presentChildren.childName': 'Child Name',
+    'presentChildren.parentName': 'Parent Name',
+    'presentChildren.grade': 'Grade',
+    'presentChildren.noPermission': 'You don\'t have permission to access this page',
+    'presentChildren.loadError': 'Failed to load present children',
+
     // Child Report
     'childReport.title': 'Child Profile Report',
     'childReport.generatedOn': 'Generated on',
@@ -618,6 +628,16 @@ const translations: Record<Language, Record<string, string>> = {
     'absentChildren.notifyPartialError': 'فشل في إرسال بعض الإشعارات',
     'absentChildren.noChildren': 'لا يوجد أطفال غائبون للإبلاغ عنهم',
     
+    // Present Children
+    'presentChildren.title': 'تقرير الأطفال الحاضرين',
+    'presentChildren.nonePresent': 'لا يوجد أطفال حاضرون في هذا التاريخ',
+    'presentChildren.presentCount': 'أطفال حاضرون',
+    'presentChildren.childName': 'اسم الطفل',
+    'presentChildren.parentName': 'اسم ولي الأمر',
+    'presentChildren.grade': 'الصف',
+    'presentChildren.noPermission': 'ليس لديك صلاحية الوصول لهذه الصفحة',
+    'presentChildren.loadError': 'فشل في تحميل الأطفال الحاضرين',
+
     // Child Report
     'childReport.title': 'تقرير ملف الطفل',
     'childReport.generatedOn': 'تم الإنشاء في',
