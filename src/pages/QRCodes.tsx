@@ -27,6 +27,45 @@ const QRCodes = () => {
   const [loading, setLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredChildren = children.filter((child) =>
+    child.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    child.parent_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (child.school_grade?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+  );
+
+  const printSelectedQRCodes = () => {
+    const selectedChildren = filteredChildren.filter((c) => selectedIds.has(c.id));
+    const childrenToPrint = selectedChildren.length > 0 ? selectedChildren : filteredChildren;
+    
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Please allow popups to print QR codes");
+      return;
+    }
+
+    const qrHtml = childrenToPrint.map((child) => {
+      const svg = document.getElementById(`qr-${child.id}`);
+      if (!svg) return "";
+      const svgData = new XMLSerializer().serializeToString(svg);
+      return `
+        <div style="display:inline-block;text-align:center;margin:16px;page-break-inside:avoid;">
+          <img src="data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}" width="200" height="200" />
+          <p style="margin:8px 0 0;font-weight:bold;font-size:14px;">${child.full_name}</p>
+          ${child.school_grade ? `<p style="margin:2px 0 0;font-size:12px;color:#666;">${child.school_grade}</p>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    printWindow.document.write(`
+      <html><head><title>QR Codes</title>
+      <style>body{font-family:sans-serif;padding:20px;}@media print{body{padding:0;}}</style>
+      </head><body>${qrHtml}</body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
 
   useEffect(() => {
     if (user && userRole) {
