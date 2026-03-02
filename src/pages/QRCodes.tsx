@@ -154,7 +154,7 @@ const QRCodes = () => {
   };
 
   const selectAll = () => {
-    setSelectedIds(new Set(children.map((c) => c.id)));
+    setSelectedIds(new Set(filteredChildren.map((c) => c.id)));
   };
 
   const deselectAll = () => {
