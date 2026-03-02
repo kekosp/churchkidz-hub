@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout";
 
@@ -14,6 +16,13 @@ const Servants = () => {
   const { t } = useLanguage();
   const [servants, setServants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredServants = servants.filter((servant) =>
+    servant.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    servant.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    servant.profiles?.phone_number?.includes(searchQuery)
+  );
 
   useEffect(() => {
     if (authLoading || userRole === null) {
@@ -68,6 +77,15 @@ const Servants = () => {
           <CardDescription>
             {servants.length} {t('roles.servant')}
           </CardDescription>
+          <div className="relative max-w-sm mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('common.search') || "Search..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -79,14 +97,14 @@ const Servants = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {servants.length === 0 ? (
+              {filteredServants.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    {t('servants.noServants')}
+                    {servants.length === 0 ? t('servants.noServants') : "No results found."}
                   </TableCell>
                 </TableRow>
               ) : (
-                servants.map((servant) => (
+                filteredServants.map((servant) => (
                   <TableRow key={servant.user_id}>
                     <TableCell className="font-medium">{servant.profiles?.full_name}</TableCell>
                     <TableCell dir="ltr">{servant.profiles?.email}</TableCell>

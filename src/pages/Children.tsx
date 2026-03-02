@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, FileText, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Upload, Search } from "lucide-react";
 import { childSchema } from "@/lib/validation-schemas";
 import ExcelJS from "exceljs";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -57,7 +57,14 @@ const Children = () => {
     errors: string[];
   } | null>(null);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const filteredChildren = children.filter((child) =>
+    child.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    child.parent_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (child.school_grade?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+    child.parent_phone.includes(searchQuery)
+  );
   const [formData, setFormData] = useState({
     full_name: "",
     date_of_birth: "",
@@ -946,10 +953,21 @@ const Children = () => {
         <CardHeader>
           <CardTitle>Children List</CardTitle>
           <CardDescription>View and manage all children in the system</CardDescription>
+          <div className="relative max-w-sm mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('common.search') || "Search..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          {children.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">No children found. Add a child to get started.</p>
+          {filteredChildren.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground">
+              {children.length === 0 ? "No children found. Add a child to get started." : "No results found."}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -965,7 +983,7 @@ const Children = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {children.map((child) => (
+                  {filteredChildren.map((child) => (
                     <TableRow key={child.id}>
                       <TableCell className="font-medium">{child.full_name}</TableCell>
                       <TableCell>{child.date_of_birth}</TableCell>
