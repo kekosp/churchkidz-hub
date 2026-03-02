@@ -179,6 +179,10 @@ const QRCodes = () => {
 
   const headerActions = children.length > 0 ? (
     <div className="flex flex-wrap gap-2">
+      <Button variant="outline" size="sm" onClick={printSelectedQRCodes}>
+        <Printer className="h-4 w-4 mr-2" />
+        {isSelecting && selectedIds.size > 0 ? `Print (${selectedIds.size})` : "Print All"}
+      </Button>
       {!isSelecting ? (
         <Button variant="outline" size="sm" onClick={() => setIsSelecting(true)}>
           <Check className="h-4 w-4 mr-2" />
@@ -189,9 +193,9 @@ const QRCodes = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={selectedIds.size === children.length ? deselectAll : selectAll}
+            onClick={selectedIds.size === filteredChildren.length ? deselectAll : selectAll}
           >
-            {selectedIds.size === children.length ? t('qr.deselectAll') : t('qr.selectAll')}
+            {selectedIds.size === filteredChildren.length ? t('qr.deselectAll') : t('qr.selectAll')}
           </Button>
           <Button
             size="sm"
