@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Check, X } from "lucide-react";
+import { Download, Check, X, Search, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout";
+import { Input } from "@/components/ui/input";
 
 interface Child {
   id: string;
@@ -26,6 +27,45 @@ const QRCodes = () => {
   const [loading, setLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredChildren = children.filter((child) =>
+    child.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    child.parent_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (child.school_grade?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+  );
+
+  const printSelectedQRCodes = () => {
+    const selectedChildren = filteredChildren.filter((c) => selectedIds.has(c.id));
+    const childrenToPrint = selectedChildren.length > 0 ? selectedChildren : filteredChildren;
+    
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Please allow popups to print QR codes");
+      return;
+    }
+
+    const qrHtml = childrenToPrint.map((child) => {
+      const svg = document.getElementById(`qr-${child.id}`);
+      if (!svg) return "";
+      const svgData = new XMLSerializer().serializeToString(svg);
+      return `
+        <div style="display:inline-block;text-align:center;margin:16px;page-break-inside:avoid;">
+          <img src="data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}" width="200" height="200" />
+          <p style="margin:8px 0 0;font-weight:bold;font-size:14px;">${child.full_name}</p>
+          ${child.school_grade ? `<p style="margin:2px 0 0;font-size:12px;color:#666;">${child.school_grade}</p>` : ""}
+        </div>
+      `;
+    }).join("");
+
+    printWindow.document.write(`
+      <html><head><title>QR Codes</title>
+      <style>body{font-family:sans-serif;padding:20px;}@media print{body{padding:0;}}</style>
+      </head><body>${qrHtml}</body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
 
   useEffect(() => {
     if (user && userRole) {
@@ -114,7 +154,7 @@ const QRCodes = () => {
   };
 
   const selectAll = () => {
-    setSelectedIds(new Set(children.map((c) => c.id)));
+    setSelectedIds(new Set(filteredChildren.map((c) => c.id)));
   };
 
   const deselectAll = () => {
@@ -139,6 +179,10 @@ const QRCodes = () => {
 
   const headerActions = children.length > 0 ? (
     <div className="flex flex-wrap gap-2">
+      <Button variant="outline" size="sm" onClick={printSelectedQRCodes}>
+        <Printer className="h-4 w-4 mr-2" />
+        {isSelecting && selectedIds.size > 0 ? `Print (${selectedIds.size})` : "Print All"}
+      </Button>
       {!isSelecting ? (
         <Button variant="outline" size="sm" onClick={() => setIsSelecting(true)}>
           <Check className="h-4 w-4 mr-2" />
@@ -149,9 +193,9 @@ const QRCodes = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={selectedIds.size === children.length ? deselectAll : selectAll}
+            onClick={selectedIds.size === filteredChildren.length ? deselectAll : selectAll}
           >
-            {selectedIds.size === children.length ? t('qr.deselectAll') : t('qr.selectAll')}
+            {selectedIds.size === filteredChildren.length ? t('qr.deselectAll') : t('qr.selectAll')}
           </Button>
           <Button
             size="sm"
@@ -192,62 +236,77 @@ const QRCodes = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {children.map((child) => (
-              <Card
-                key={child.id}
-                className={`relative transition-all ${
-                  isSelecting && selectedIds.has(child.id)
-                    ? "ring-2 ring-primary"
-                    : ""
-                } ${isSelecting ? "cursor-pointer" : ""}`}
-                onClick={() => isSelecting && toggleSelect(child.id)}
-              >
-                {isSelecting && (
-                  <div className="absolute top-4 right-4 z-10">
-                    <Checkbox
-                      checked={selectedIds.has(child.id)}
-                      onCheckedChange={() => toggleSelect(child.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="text-lg">{child.full_name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {t('children.parentName')}: {child.parent_name}
-                  </p>
-                  {child.school_grade && (
-                    <p className="text-sm text-muted-foreground">
-                      {t('children.schoolGrade')}: {child.school_grade}
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent className="flex flex-col items-center gap-4">
-                  <div className="bg-white p-4 rounded-lg">
-                    <QRCodeSVG
-                      id={`qr-${child.id}`}
-                      value={child.id}
-                      size={200}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </div>
-                  {!isSelecting && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => downloadQRCode(child.id, child.full_name)}
-                      className="w-full gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      {t('qr.download')}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <>
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('common.search') || "Search..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            {filteredChildren.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No results found</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredChildren.map((child) => (
+                  <Card
+                    key={child.id}
+                    className={`relative transition-all ${
+                      isSelecting && selectedIds.has(child.id)
+                        ? "ring-2 ring-primary"
+                        : ""
+                    } ${isSelecting ? "cursor-pointer" : ""}`}
+                    onClick={() => isSelecting && toggleSelect(child.id)}
+                  >
+                    {isSelecting && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <Checkbox
+                          checked={selectedIds.has(child.id)}
+                          onCheckedChange={() => toggleSelect(child.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="text-lg">{child.full_name}</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {t('children.parentName')}: {child.parent_name}
+                      </p>
+                      {child.school_grade && (
+                        <p className="text-sm text-muted-foreground">
+                          {t('children.schoolGrade')}: {child.school_grade}
+                        </p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center gap-4">
+                      <div className="bg-white p-4 rounded-lg">
+                        <QRCodeSVG
+                          id={`qr-${child.id}`}
+                          value={child.id}
+                          size={200}
+                          level="H"
+                          includeMargin={true}
+                        />
+                      </div>
+                      {!isSelecting && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadQRCode(child.id, child.full_name)}
+                          className="w-full gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          {t('qr.download')}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </AppLayout>
