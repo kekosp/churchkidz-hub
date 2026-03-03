@@ -31,6 +31,8 @@ import {
   LogOut,
   LayoutDashboard,
   UserX,
+  ScrollText,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -100,6 +102,105 @@ export function AppSidebar() {
     const childNavItems: NavItem[] = [
       { title: t("childDashboard.title"), icon: LayoutDashboard, href: "/child-dashboard" },
     ];
+
+    return (
+      // ... keep existing code (child sidebar)
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
+        <SidebarHeader className="border-b border-sidebar-border/50 p-4">
+          <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg shadow-sm transition-transform duration-200 hover:scale-105">
+              🏛️
+            </div>
+            {!collapsed && (
+              <div className="flex flex-col animate-slide-in-left">
+                <span className="font-semibold text-sidebar-foreground tracking-tight">
+                  {t("app.title")}
+                </span>
+                <span className="text-xs text-sidebar-foreground/50 font-medium">
+                  {t('roles.child')}
+                </span>
+              </div>
+            )}
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="px-3 py-4">
+          <SidebarGroup>
+            <SidebarGroupContent>{renderNavItems(childNavItems)}</SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter className="border-t border-sidebar-border/50 p-3">
+          <div className={cn("flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-sidebar-accent/10", collapsed && "justify-center p-1")}>
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-semibold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            {!collapsed && (
+              <div className="flex-1 min-w-0 animate-slide-in-left">
+                <p className="text-sm font-medium truncate text-sidebar-foreground">{user?.email?.split("@")[0]}</p>
+                <p className="text-[11px] text-sidebar-foreground/40 truncate">{user?.email}</p>
+              </div>
+            )}
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="shrink-0 h-8 w-8 text-sidebar-foreground/50 hover:text-destructive hover:bg-destructive/10" title={t("auth.signout")}>
+              <LogOut className={cn("h-4 w-4", isRTL && "rtl-flip")} />
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
+
+  // Parent role gets a portal-focused navigation
+  if (userRole === "parent") {
+    const parentNavItems: NavItem[] = [
+      { title: t("parentPortal.title"), icon: Home, href: "/parent-portal" },
+    ];
+
+    return (
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
+        <SidebarHeader className="border-b border-sidebar-border/50 p-4">
+          <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg shadow-sm transition-transform duration-200 hover:scale-105">
+              🏛️
+            </div>
+            {!collapsed && (
+              <div className="flex flex-col animate-slide-in-left">
+                <span className="font-semibold text-sidebar-foreground tracking-tight">
+                  {t("app.title")}
+                </span>
+                <span className="text-xs text-sidebar-foreground/50 font-medium">
+                  {t('roles.parent')}
+                </span>
+              </div>
+            )}
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="px-3 py-4">
+          <SidebarGroup>
+            <SidebarGroupContent>{renderNavItems(parentNavItems)}</SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter className="border-t border-sidebar-border/50 p-3">
+          <div className={cn("flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-sidebar-accent/10", collapsed && "justify-center p-1")}>
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-semibold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            {!collapsed && (
+              <div className="flex-1 min-w-0 animate-slide-in-left">
+                <p className="text-sm font-medium truncate text-sidebar-foreground">{user?.email?.split("@")[0]}</p>
+                <p className="text-[11px] text-sidebar-foreground/40 truncate">{user?.email}</p>
+              </div>
+            )}
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="shrink-0 h-8 w-8 text-sidebar-foreground/50 hover:text-destructive hover:bg-destructive/10" title={t("auth.signout")}>
+              <LogOut className={cn("h-4 w-4", isRTL && "rtl-flip")} />
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
 
     return (
       <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
