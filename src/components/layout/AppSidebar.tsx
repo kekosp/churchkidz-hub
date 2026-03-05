@@ -35,6 +35,7 @@ import {
   UserX,
   ScrollText,
   Home,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -232,6 +233,13 @@ export function AppSidebar() {
       icon: UserCheck,
       href: "/servants",
       roles: ["admin"],
+    },
+    {
+      title: t("messages.title"),
+      icon: MessageSquare,
+      href: "/messages",
+      roles: ["admin", "servant"],
+      badge: unreadCount,
     },
   ];
 
