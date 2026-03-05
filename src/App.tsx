@@ -26,6 +26,7 @@ import BugReportsAdmin from "./pages/BugReportsAdmin";
 import ChildDashboard from "./pages/ChildDashboard";
 import AuditLog from "./pages/AuditLog";
 import ParentPortal from "./pages/ParentPortal";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => (
           <Route path="/child-dashboard" element={<ChildDashboard />} />
           <Route path="/audit-log" element={<AuditLog />} />
           <Route path="/parent-portal" element={<ParentPortal />} />
+          <Route path="/messages" element={<Messages />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
