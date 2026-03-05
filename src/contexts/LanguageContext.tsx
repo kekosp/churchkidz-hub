@@ -493,6 +493,24 @@ const translations: Record<Language, Record<string, string>> = {
     'parentPortal.updateChildInfo': 'Update Child Info',
     'parentPortal.childUpdated': 'Child info updated successfully',
     'parentPortal.updateError': 'Failed to update child info',
+
+    // Messages page
+    'messages.title': 'Messages',
+    'messages.inbox': 'Inbox',
+    'messages.sentTab': 'Sent',
+    'messages.compose': 'Compose',
+    'messages.selectRecipient': 'Select recipient',
+    'messages.from': 'From',
+    'messages.to': 'To',
+    'messages.reply': 'Reply',
+    'messages.markRead': 'Mark as read',
+    'messages.originalMessage': 'Original message',
+    'messages.messageSent': 'Message sent successfully',
+    'messages.messageError': 'Failed to send message',
+    'messages.newMessage': 'You have a new message',
+    'messages.loadError': 'Failed to load messages',
+    'messages.noInbox': 'No messages in your inbox',
+    'messages.noSent': 'No sent messages',
   },
   ar: {
     // Common
@@ -975,6 +993,24 @@ const translations: Record<Language, Record<string, string>> = {
     'parentPortal.updateChildInfo': 'تحديث معلومات الطفل',
     'parentPortal.childUpdated': 'تم تحديث معلومات الطفل بنجاح',
     'parentPortal.updateError': 'فشل في تحديث معلومات الطفل',
+
+    // Messages page
+    'messages.title': 'الرسائل',
+    'messages.inbox': 'الوارد',
+    'messages.sentTab': 'المرسل',
+    'messages.compose': 'رسالة جديدة',
+    'messages.selectRecipient': 'اختر المستلم',
+    'messages.from': 'من',
+    'messages.to': 'إلى',
+    'messages.reply': 'رد',
+    'messages.markRead': 'تحديد كمقروء',
+    'messages.originalMessage': 'الرسالة الأصلية',
+    'messages.messageSent': 'تم إرسال الرسالة بنجاح',
+    'messages.messageError': 'فشل في إرسال الرسالة',
+    'messages.newMessage': 'لديك رسالة جديدة',
+    'messages.loadError': 'فشل في تحميل الرسائل',
+    'messages.noInbox': 'لا توجد رسائل في الوارد',
+    'messages.noSent': 'لا توجد رسائل مرسلة',
   },
 };
 
