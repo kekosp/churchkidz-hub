@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -41,6 +43,7 @@ interface NavItem {
   icon: React.ElementType;
   href: string;
   roles?: ("admin" | "servant" | "parent" | "child")[];
+  badge?: number;
 }
 
 export function AppSidebar() {
@@ -50,6 +53,7 @@ export function AppSidebar() {
   const { t, isRTL } = useLanguage();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const unreadCount = useUnreadMessages();
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,8 +90,13 @@ export function AppSidebar() {
                 )}
               />
               {!collapsed && (
-                <span className="truncate text-sm">{item.title}</span>
+                <span className="truncate text-sm flex-1">{item.title}</span>
               )}
+              {item.badge && item.badge > 0 ? (
+                <Badge className="h-5 min-w-5 px-1.5 text-[10px] font-bold bg-destructive text-destructive-foreground rounded-full flex items-center justify-center">
+                  {item.badge > 99 ? "99+" : item.badge}
+                </Badge>
+              ) : null}
             </SidebarMenuButton>
           </SidebarMenuItem>
         );
@@ -153,7 +162,7 @@ export function AppSidebar() {
   // Parent role gets a portal-focused navigation
   if (userRole === "parent") {
     const parentNavItems: NavItem[] = [
-      { title: t("parentPortal.title"), icon: Home, href: "/parent-portal" },
+      { title: t("parentPortal.title"), icon: Home, href: "/parent-portal", badge: unreadCount },
     ];
 
     return (
