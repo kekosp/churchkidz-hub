@@ -142,7 +142,7 @@ const Messages = () => {
   const sentMessages = messages.filter(m => m.sender_id === user?.id);
   const unreadCount = inboxMessages.filter(m => !m.is_read).length;
 
-  const getName = (id: string) => profiles[id] || id.slice(0, 8);
+  const getName = (id: string | undefined) => id ? (profiles[id] || id.slice(0, 8)) : "";
 
   const renderMessage = (msg: any, type: "inbox" | "sent") => (
     <Card
