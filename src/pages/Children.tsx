@@ -950,9 +950,9 @@ const Children = () => {
       </Dialog>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Children List</CardTitle>
-          <CardDescription>View and manage all children in the system</CardDescription>
+        <CardHeader className="px-4 md:px-6">
+          <CardTitle className="text-base md:text-lg">Children List</CardTitle>
+          <CardDescription className="text-xs md:text-sm">View and manage all children in the system</CardDescription>
           <div className="relative max-w-sm mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -963,72 +963,97 @@ const Children = () => {
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 md:px-6">
           {filteredChildren.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
               {children.length === 0 ? "No children found. Add a child to get started." : "No results found."}
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Date of Birth</TableHead>
-                    <TableHead>Parent</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredChildren.map((child) => (
-                    <TableRow key={child.id}>
-                      <TableCell className="font-medium">{child.full_name}</TableCell>
-                      <TableCell>{child.date_of_birth}</TableCell>
-                      <TableCell>{child.parent_name}</TableCell>
-                      <TableCell>{child.parent_phone}</TableCell>
-                      <TableCell>{child.school_grade || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant={child.attendance_status === "Regular" ? "default" : "secondary"}>
-                          {child.attendance_status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/child-report/${child.id}`)}
-                          >
-                            <FileText className="h-4 w-4" />
+            <>
+              {/* Mobile card view */}
+              <div className="space-y-3 md:hidden">
+                {filteredChildren.map((child) => (
+                  <div key={child.id} className="rounded-lg border p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-sm">{child.full_name}</span>
+                      <Badge variant={child.attendance_status === "Regular" ? "default" : "secondary"} className="text-[10px]">
+                        {child.attendance_status}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                      <span>📅 {child.date_of_birth}</span>
+                      <span>🎓 {child.school_grade || "-"}</span>
+                      <span>👤 {child.parent_name}</span>
+                      <span>📱 {child.parent_phone}</span>
+                    </div>
+                    <div className="flex gap-1 pt-1 border-t">
+                      <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => navigate(`/child-report/${child.id}`)}>
+                        <FileText className="h-3.5 w-3.5 mr-1" /> Report
+                      </Button>
+                      {canEdit && (
+                        <>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => openEditDialog(child)}>
+                            <Edit className="h-3.5 w-3.5 mr-1" /> Edit
                           </Button>
-                          {canEdit && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditDialog(child)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(child.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handleDelete(child.id)}>
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="overflow-x-auto hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Date of Birth</TableHead>
+                      <TableHead>Parent</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Grade</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredChildren.map((child) => (
+                      <TableRow key={child.id}>
+                        <TableCell className="font-medium">{child.full_name}</TableCell>
+                        <TableCell>{child.date_of_birth}</TableCell>
+                        <TableCell>{child.parent_name}</TableCell>
+                        <TableCell>{child.parent_phone}</TableCell>
+                        <TableCell>{child.school_grade || "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant={child.attendance_status === "Regular" ? "default" : "secondary"}>
+                            {child.attendance_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/child-report/${child.id}`)}>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                            {canEdit && (
+                              <>
+                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(child)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => handleDelete(child.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -99,39 +99,39 @@ const Reports = () => {
   const showAnalytics = userRole === "admin" || userRole === "servant";
 
   const StatsCards = () => (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid grid-cols-3 gap-2 md:gap-4">
       <Card className="border-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('reports.totalChildren')}</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="flex flex-col md:flex-row items-center md:justify-between space-y-1 md:space-y-0 p-3 md:p-6 pb-1 md:pb-2">
+          <CardTitle className="text-[10px] md:text-sm font-medium text-center md:text-left">{t('reports.totalChildren')}</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground hidden md:block" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalChildren}</div>
-          <p className="text-xs text-muted-foreground">{t('reports.registeredInSystem')}</p>
+        <CardContent className="p-3 md:p-6 pt-0 text-center md:text-left">
+          <div className="text-xl md:text-2xl font-bold">{totalChildren}</div>
+          <p className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t('reports.registeredInSystem')}</p>
         </CardContent>
       </Card>
 
       <Card className="border-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('reports.averageAttendance')}</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="flex flex-col md:flex-row items-center md:justify-between space-y-1 md:space-y-0 p-3 md:p-6 pb-1 md:pb-2">
+          <CardTitle className="text-[10px] md:text-sm font-medium text-center md:text-left">{t('reports.averageAttendance')}</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground hidden md:block" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{averageAttendance}%</div>
-          <p className="text-xs text-muted-foreground">{t('reports.acrossAllChildren')}</p>
+        <CardContent className="p-3 md:p-6 pt-0 text-center md:text-left">
+          <div className="text-xl md:text-2xl font-bold">{averageAttendance}%</div>
+          <p className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t('reports.acrossAllChildren')}</p>
         </CardContent>
       </Card>
 
       <Card className="border-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('reports.totalRecords')}</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="flex flex-col md:flex-row items-center md:justify-between space-y-1 md:space-y-0 p-3 md:p-6 pb-1 md:pb-2">
+          <CardTitle className="text-[10px] md:text-sm font-medium text-center md:text-left">{t('reports.totalRecords')}</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground hidden md:block" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+        <CardContent className="p-3 md:p-6 pt-0 text-center md:text-left">
+          <div className="text-xl md:text-2xl font-bold">
             {stats.reduce((sum, stat) => sum + stat.total_services, 0)}
           </div>
-          <p className="text-xs text-muted-foreground">{t('reports.attendanceRecords')}</p>
+          <p className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t('reports.attendanceRecords')}</p>
         </CardContent>
       </Card>
     </div>
@@ -202,25 +202,25 @@ const Reports = () => {
 
   return (
     <AppLayout title={t('reports.title')}>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {showAnalytics ? (
-          <Tabs defaultValue="analytics" className="space-y-6">
+          <Tabs defaultValue="analytics" className="space-y-4 md:space-y-6">
             <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="analytics" className="gap-2">
-                <BarChart3 className="h-4 w-4" />
+              <TabsTrigger value="analytics" className="gap-2 text-xs md:text-sm">
+                <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {t('analytics.title')}
               </TabsTrigger>
-              <TabsTrigger value="details" className="gap-2">
-                <FileText className="h-4 w-4" />
+              <TabsTrigger value="details" className="gap-2 text-xs md:text-sm">
+                <FileText className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {t('reports.individualStats')}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="analytics" className="space-y-6">
+            <TabsContent value="analytics" className="space-y-4 md:space-y-6">
               <AnalyticsDashboard />
             </TabsContent>
 
-            <TabsContent value="details" className="space-y-6">
+            <TabsContent value="details" className="space-y-4 md:space-y-6">
               <StatsCards />
               <StatsTable />
             </TabsContent>
