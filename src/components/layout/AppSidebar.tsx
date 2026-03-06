@@ -115,7 +115,7 @@ export function AppSidebar() {
 
     return (
       // ... keep existing code (child sidebar)
-      <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
+      <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border/50">
         <SidebarHeader className="border-b border-sidebar-border/50 p-4">
           <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg shadow-sm transition-transform duration-200 hover:scale-105">
@@ -167,7 +167,7 @@ export function AppSidebar() {
     ];
 
     return (
-      <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
+      <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border/50">
         <SidebarHeader className="border-b border-sidebar-border/50 p-4">
           <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg shadow-sm transition-transform duration-200 hover:scale-105">
@@ -317,7 +317,7 @@ export function AppSidebar() {
 
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
+    <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border/50">
       {/* Header with branding */}
       <SidebarHeader className="border-b border-sidebar-border/50 p-4">
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
