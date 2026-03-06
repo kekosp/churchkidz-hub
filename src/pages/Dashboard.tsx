@@ -187,25 +187,25 @@ const Dashboard = () => {
 
   return (
     <AppLayout title={t("dashboard.title")}>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* Welcome Section */}
-        <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 animate-fade-in">
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">
+        <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 md:p-6 animate-fade-in">
+          <h2 className="text-lg md:text-2xl font-bold text-foreground tracking-tight">
             {t("dashboard.welcome")}, {user?.email?.split("@")[0]}! 👋
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-muted-foreground mt-1 text-xs md:text-sm">
             {roleTranslations[userRole || ""] || t("dashboard.noRole")}
           </p>
         </div>
 
         {/* Stats Overview */}
         <div className="flex items-center justify-between animate-fade-in animate-delay-75">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             {t("dashboard.title")}
           </h3>
           <div className="flex items-center gap-2">
             {lastUpdated && (
-              <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+              <span className="text-[10px] md:text-[11px] text-muted-foreground/60 tabular-nums">
                 {lastUpdated.toLocaleTimeString()}
               </span>
             )}
@@ -221,7 +221,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 md:gap-4 md:grid-cols-3">
           {statsCards.map((stat, index) => (
             <Card
               key={index}
@@ -233,20 +233,20 @@ const Dashboard = () => {
               )}
               onClick={() => navigate(stat.href)}
             >
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className={cn("rounded-xl p-2.5 transition-transform duration-200 hover:scale-110", stat.iconColor)}>
-                    <stat.icon className="h-5 w-5" />
+              <CardContent className="p-3 md:p-5">
+                <div className="flex flex-col items-center gap-2 md:flex-row md:gap-4">
+                  <div className={cn("rounded-xl p-2 md:p-2.5 transition-transform duration-200 hover:scale-110", stat.iconColor)}>
+                    <stat.icon className="h-4 w-4 md:h-5 md:w-5" />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold tracking-tight">
+                  <div className="text-center md:text-left">
+                    <p className="text-xl md:text-2xl font-bold tracking-tight">
                       {statsLoading ? (
-                        <Skeleton className="h-7 w-12 inline-block rounded-md" />
+                        <Skeleton className="h-6 w-10 md:h-7 md:w-12 inline-block rounded-md" />
                       ) : (
                         <span className="animate-count-up inline-block">{stat.value}</span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground/80 font-medium">{stat.title}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground/80 font-medium">{stat.title}</p>
                   </div>
                 </div>
               </CardContent>
@@ -256,10 +256,10 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="opacity-0 animate-fade-in animate-delay-400">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+          <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 md:mb-4">
             Quick Actions
           </h3>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4">
             {quickActions.map((action, index) => (
               <Card
                 key={index}
@@ -269,17 +269,17 @@ const Dashboard = () => {
                 )}
                 onClick={() => navigate(action.href)}
               >
-                <CardContent className={cn("p-4 bg-gradient-to-br", action.gradient)}>
-                  <div className="flex flex-col gap-3">
+                <CardContent className={cn("p-3 md:p-4 bg-gradient-to-br", action.gradient)}>
+                  <div className="flex flex-col gap-2 md:gap-3">
                     <div className={cn(
-                      "rounded-xl p-2.5 w-fit transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3",
+                      "rounded-xl p-2 md:p-2.5 w-fit transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3",
                       action.iconColor
                     )}>
-                      <action.icon className="h-5 w-5" />
+                      <action.icon className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-sm tracking-tight">{action.title}</h4>
-                      <p className="text-xs text-muted-foreground/70 line-clamp-2 mt-0.5">
+                      <h4 className="font-semibold text-xs md:text-sm tracking-tight">{action.title}</h4>
+                      <p className="text-[10px] md:text-xs text-muted-foreground/70 line-clamp-2 mt-0.5 hidden sm:block">
                         {action.description}
                       </p>
                     </div>
