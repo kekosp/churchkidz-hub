@@ -322,16 +322,16 @@ const Attendance = () => {
       title={userRole === "parent" ? t('dashboard.attendanceHistory') : t('attendance.title')}
       headerActions={headerActions}
     >
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
 
         {!isOnline && (
-          <Card className="mb-6 border-warning/50 bg-warning/10">
-            <CardContent className="pt-6">
+          <Card className="border-warning/50 bg-warning/10">
+            <CardContent className="p-4 md:pt-6">
               <div className="flex items-center gap-3 text-warning-foreground">
-                <CloudOff className="h-5 w-5" />
+                <CloudOff className="h-5 w-5 shrink-0" />
                 <div>
-                  <p className="font-medium">You're offline</p>
-                  <p className="text-sm opacity-80">
+                  <p className="font-medium text-sm">You're offline</p>
+                  <p className="text-xs opacity-80">
                     Changes will be saved locally and synced when you're back online.
                   </p>
                 </div>
@@ -341,14 +341,14 @@ const Attendance = () => {
         )}
 
         {hasOfflineData && isOnline && (
-          <Card className="mb-6 border-primary/30 bg-primary/5">
-            <CardContent className="pt-6">
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="p-4 md:pt-6">
               <div className="flex items-center gap-3">
-                <CloudOff className="h-5 w-5 text-primary" />
+                <CloudOff className="h-5 w-5 text-primary shrink-0" />
                 <div>
-                  <p className="font-medium">Unsynced offline data detected</p>
-                  <p className="text-sm text-muted-foreground">
-                    You have attendance records saved offline. Use the Sync button to upload them.
+                  <p className="font-medium text-sm">Unsynced offline data detected</p>
+                  <p className="text-xs text-muted-foreground">
+                    Use the Sync button to upload them.
                   </p>
                 </div>
               </div>
@@ -357,21 +357,21 @@ const Attendance = () => {
         )}
 
         {userRole === "parent" && (
-          <Card className="mb-6 border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-lg">{t('dashboard.attendanceHistory')}</CardTitle>
-              <CardDescription>
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-base md:text-lg">{t('dashboard.attendanceHistory')}</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 {t('dashboard.attendanceHistoryDesc')}
               </CardDescription>
             </CardHeader>
           </Card>
         )}
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>{t('attendance.selectDate')}</CardTitle>
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">{t('attendance.selectDate')}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6 pb-4">
             <div className="max-w-xs">
               <Label htmlFor="service_date">{t('common.date')}</Label>
               <Input
@@ -387,42 +387,42 @@ const Attendance = () => {
         </Card>
 
         {children.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-3 gap-2 md:gap-4">
             <Card className="border-green-500/30 bg-green-500/10">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <UserCheck className="h-8 w-8 text-green-600" />
-                  <div>
-                    <p className="text-2xl font-bold text-green-600">
+              <CardContent className="p-3 md:pt-6">
+                <div className="flex flex-col items-center gap-1 md:flex-row md:gap-3">
+                  <UserCheck className="h-5 w-5 md:h-8 md:w-8 text-green-600" />
+                  <div className="text-center md:text-left">
+                    <p className="text-lg md:text-2xl font-bold text-green-600">
                       {Object.values(attendance).filter((a) => a.present).length}
                     </p>
-                    <p className="text-sm text-muted-foreground">{t('common.present')}</p>
+                    <p className="text-[10px] md:text-sm text-muted-foreground">{t('common.present')}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-red-500/30 bg-red-500/10">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <UserX className="h-8 w-8 text-red-600" />
-                  <div>
-                    <p className="text-2xl font-bold text-red-600">
+              <CardContent className="p-3 md:pt-6">
+                <div className="flex flex-col items-center gap-1 md:flex-row md:gap-3">
+                  <UserX className="h-5 w-5 md:h-8 md:w-8 text-red-600" />
+                  <div className="text-center md:text-left">
+                    <p className="text-lg md:text-2xl font-bold text-red-600">
                       {Object.values(attendance).filter((a) => !a.present).length}
                     </p>
-                    <p className="text-sm text-muted-foreground">{t('common.absent')}</p>
+                    <p className="text-[10px] md:text-sm text-muted-foreground">{t('common.absent')}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+              <CardContent className="p-3 md:pt-6">
+                <div className="flex flex-col items-center gap-1 md:flex-row md:gap-3">
+                  <div className="h-5 w-5 md:h-8 md:w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs md:text-base">
                     {children.length}
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{children.length}</p>
-                    <p className="text-sm text-muted-foreground">{t('landing.childrenManagement')}</p>
+                  <div className="text-center md:text-left">
+                    <p className="text-lg md:text-2xl font-bold">{children.length}</p>
+                    <p className="text-[10px] md:text-sm text-muted-foreground">{t('landing.childrenManagement')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -431,26 +431,26 @@ const Attendance = () => {
         )}
 
         <Card>
-          <CardHeader>
-            <CardTitle>{t('attendance.title')}</CardTitle>
-            <CardDescription>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">{t('attendance.title')}</CardTitle>
+            <CardDescription className="text-xs md:text-sm">
               {children.length} {t('landing.childrenManagement')}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="px-3 md:px-6 pb-4">
+            <div className="space-y-3 md:space-y-4">
               {children.map((child) => {
                 const isPresent = attendance[child.id]?.present;
                 return (
                   <div
                     key={child.id}
-                    className={`flex items-start gap-4 rounded-lg border p-4 transition-colors ${
+                    className={`flex flex-col md:flex-row md:items-start gap-2 md:gap-4 rounded-lg border p-3 md:p-4 transition-colors ${
                       isPresent
                         ? "border-green-500/30 bg-green-500/5 hover:bg-green-500/10"
                         : "border-red-500/30 bg-red-500/5 hover:bg-red-500/10"
                     }`}
                   >
-                    <div className="flex items-center gap-3 min-w-[200px]">
+                    <div className="flex items-center gap-3 min-w-0 md:min-w-[200px]">
                       <Checkbox
                         id={`present-${child.id}`}
                         checked={isPresent}
@@ -461,13 +461,13 @@ const Attendance = () => {
                       />
                       <Label
                         htmlFor={`present-${child.id}`}
-                        className="text-base font-medium cursor-pointer"
+                        className="text-sm md:text-base font-medium cursor-pointer truncate"
                       >
                         {child.full_name}
                       </Label>
                       <Badge
                         variant={isPresent ? "default" : "destructive"}
-                        className={isPresent ? "bg-green-600" : ""}
+                        className={`text-[10px] md:text-xs shrink-0 ${isPresent ? "bg-green-600" : ""}`}
                       >
                         {isPresent ? t('common.present') : t('common.absent')}
                       </Badge>
@@ -479,9 +479,9 @@ const Attendance = () => {
                         onChange={(e) =>
                           handleAttendanceChange(child.id, "notes", e.target.value)
                         }
-                        rows={2}
+                        rows={1}
                         disabled={!canEdit}
-                        className="text-sm"
+                        className="text-xs md:text-sm resize-none"
                       />
                     </div>
                   </div>

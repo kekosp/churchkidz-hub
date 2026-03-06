@@ -18,6 +18,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useRef, useCallback, useState } from "react";
 
 interface QuickAction {
   title: string;
@@ -185,9 +186,61 @@ const Dashboard = () => {
     },
   ];
 
+  // Pull-to-refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const scrollTop = containerRef.current?.closest('main')?.scrollTop ?? 0;
+    if (scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+      setIsPulling(true);
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isPulling) return;
+    const diff = e.touches[0].clientY - touchStartY.current;
+    if (diff > 0) {
+      setPullDistance(Math.min(diff * 0.5, 80));
+    }
+  }, [isPulling]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance > 60) {
+      setIsRefreshing(true);
+      await refresh();
+      setIsRefreshing(false);
+    }
+    setPullDistance(0);
+    setIsPulling(false);
+  }, [pullDistance, refresh]);
+
   return (
     <AppLayout title={t("dashboard.title")}>
-      <div className="space-y-4 md:space-y-6">
+      <div
+        ref={containerRef}
+        className="space-y-4 md:space-y-6"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Pull to refresh indicator */}
+        <div
+          className={cn(
+            "flex items-center justify-center overflow-hidden transition-all duration-200",
+            pullDistance > 0 ? "opacity-100" : "opacity-0"
+          )}
+          style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px' }}
+        >
+          <RefreshCw className={cn("h-5 w-5 text-primary transition-transform", (isRefreshing || pullDistance > 60) && "animate-spin")} />
+          <span className="ml-2 text-xs text-muted-foreground">
+            {pullDistance > 60 ? "Release to refresh" : "Pull to refresh"}
+          </span>
+        </div>
         {/* Welcome Section */}
         <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 md:p-6 animate-fade-in">
           <h2 className="text-lg md:text-2xl font-bold text-foreground tracking-tight">
