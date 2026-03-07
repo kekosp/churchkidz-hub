@@ -42,6 +42,7 @@ const ParentPortal = () => {
   const [msgSubject, setMsgSubject] = useState("");
   const [msgContent, setMsgContent] = useState("");
   const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
 
   // Edit child form
   const [editingChild, setEditingChild] = useState<any>(null);
