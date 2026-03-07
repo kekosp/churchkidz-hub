@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Calendar, MessageSquare, Users, Trophy, Send, CheckCircle, Clock, XCircle, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import ConversationList from "@/components/messages/ConversationList";
+import ChatView from "@/components/messages/ChatView";
 
 const ParentPortal = () => {
   const navigate = useNavigate();
@@ -40,6 +42,7 @@ const ParentPortal = () => {
   const [msgSubject, setMsgSubject] = useState("");
   const [msgContent, setMsgContent] = useState("");
   const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
 
   // Edit child form
   const [editingChild, setEditingChild] = useState<any>(null);
@@ -356,70 +359,125 @@ const ParentPortal = () => {
           </TabsContent>
 
           {/* Messages Tab */}
-          <TabsContent value="messages" className="space-y-4">
-            <div className="flex justify-end">
-              <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
-                <DialogTrigger asChild>
-                  <Button><Send className="h-4 w-4 mr-2" />{t("parentPortal.sendMessage")}</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t("parentPortal.sendMessage")}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <Select value={msgReceiverId} onValueChange={setMsgReceiverId}>
-                      <SelectTrigger><SelectValue placeholder={t("parentPortal.selectServant")} /></SelectTrigger>
-                      <SelectContent>
-                        {servants.map(s => (
-                          <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={msgChildId} onValueChange={setMsgChildId}>
-                      <SelectTrigger><SelectValue placeholder={t("parentPortal.regardingChild")} /></SelectTrigger>
-                      <SelectContent>
-                        {children.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input placeholder={t("parentPortal.subject")} value={msgSubject} onChange={e => setMsgSubject(e.target.value)} />
-                    <Textarea
-                      placeholder={t("parentPortal.messagePlaceholder")}
-                      value={msgContent}
-                      onChange={e => setMsgContent(e.target.value)}
+          <TabsContent value="messages">
+            {(() => {
+              const convMap: Record<string, { otherId: string; msgs: any[] }> = {};
+              messages.forEach((m) => {
+                const otherId = m.sender_id === user?.id ? m.receiver_id : m.sender_id;
+                if (!convMap[otherId]) convMap[otherId] = { otherId, msgs: [] };
+                convMap[otherId].msgs.push(m);
+              });
+              const conversations = Object.values(convMap).map((c) => {
+                const sorted = [...c.msgs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                const servant = servants.find(s => s.id === c.otherId);
+                return {
+                  oderId: c.otherId,
+                  name: servant?.full_name || t("parentPortal.unknownUser"),
+                  lastMessage: sorted[0]?.content || "",
+                  lastDate: sorted[0]?.created_at || new Date().toISOString(),
+                  unreadCount: c.msgs.filter(m => !m.is_read && m.receiver_id === user?.id).length,
+                  msgs: c.msgs,
+                };
+              }).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
+
+              const activeConv = conversations.find(c => c.oderId === selectedConversation);
+
+              const handleSendReply = async (content: string) => {
+                if (!user || !selectedConversation) return;
+                const { error } = await supabase.from("messages").insert({
+                  sender_id: user.id,
+                  receiver_id: selectedConversation,
+                  content,
+                });
+                if (error) { toast.error(t("parentPortal.messageError")); return; }
+                fetchData();
+              };
+
+              const handleSelectConversation = async (otherId: string) => {
+                setSelectedConversation(otherId);
+                const conv = conversations.find(c => c.oderId === otherId);
+                if (conv && user) {
+                  const unreadIds = conv.msgs.filter(m => !m.is_read && m.receiver_id === user.id).map(m => m.id);
+                  if (unreadIds.length > 0) {
+                    await supabase.from("messages").update({ is_read: true }).in("id", unreadIds);
+                  }
+                }
+              };
+
+              return (
+                <div className="flex flex-col md:flex-row gap-4 min-h-[400px] mt-4">
+                  <div className={`md:w-1/3 ${selectedConversation ? "hidden md:block" : ""}`}>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-semibold">{t("parentPortal.messages")}</h3>
+                      <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline"><Send className="h-3 w-3 mr-1" />{t("parentPortal.newMessage")}</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{t("parentPortal.sendMessage")}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <Select value={msgReceiverId} onValueChange={setMsgReceiverId}>
+                              <SelectTrigger><SelectValue placeholder={t("parentPortal.selectServant")} /></SelectTrigger>
+                              <SelectContent>
+                                {servants.map(s => (
+                                  <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Textarea
+                              placeholder={t("parentPortal.messagePlaceholder")}
+                              value={msgContent}
+                              onChange={e => setMsgContent(e.target.value)}
+                            />
+                            <Button onClick={async () => {
+                              if (!user || !msgReceiverId || !msgContent.trim()) return;
+                              const { error } = await supabase.from("messages").insert({
+                                sender_id: user.id,
+                                receiver_id: msgReceiverId,
+                                content: msgContent.trim(),
+                              });
+                              if (error) { toast.error(t("parentPortal.messageError")); return; }
+                              toast.success(t("parentPortal.messageSent"));
+                              setShowMessageDialog(false);
+                              setMsgContent("");
+                              setMsgReceiverId("");
+                              setSelectedConversation(msgReceiverId);
+                              fetchData();
+                            }} disabled={!msgReceiverId || !msgContent.trim()} className="w-full">
+                              <Send className="h-4 w-4 mr-2" />{t("parentPortal.send")}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    <ConversationList
+                      conversations={conversations}
+                      onSelect={handleSelectConversation}
+                      selectedId={selectedConversation}
+                      loading={loading}
+                      emptyText={t("parentPortal.noMessages")}
                     />
-                    <Button onClick={sendMessage} disabled={!msgReceiverId || !msgContent.trim()} className="w-full">
-                      <Send className="h-4 w-4 mr-2" />{t("parentPortal.send")}
-                    </Button>
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            {messages.length === 0 ? (
-              <Card><CardContent className="py-8 text-center text-muted-foreground">{t("parentPortal.noMessages")}</CardContent></Card>
-            ) : (
-              <div className="space-y-3">
-                {messages.map(msg => (
-                  <Card key={msg.id} className={!msg.is_read && msg.receiver_id === user?.id ? "border-primary/30 bg-primary/5" : ""}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          {msg.subject && <p className="font-medium">{msg.subject}</p>}
-                          <p className="text-sm mt-1">{msg.content}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {msg.sender_id === user?.id ? t("parentPortal.sent") : t("parentPortal.received")} • {format(new Date(msg.created_at), "yyyy-MM-dd HH:mm")}
-                          </p>
-                        </div>
-                        {!msg.is_read && msg.receiver_id === user?.id && (
-                          <Badge className="bg-primary text-primary-foreground">{t("parentPortal.unread")}</Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                  <div className={`md:w-2/3 border rounded-lg overflow-hidden ${!selectedConversation ? "hidden md:flex md:items-center md:justify-center" : "flex"}`}>
+                    {selectedConversation && activeConv ? (
+                      <ChatView
+                        messages={activeConv.msgs}
+                        currentUserId={user?.id || ""}
+                        otherName={activeConv.name}
+                        onSend={handleSendReply}
+                        onBack={() => setSelectedConversation(null)}
+                        sendLabel={t("parentPortal.send")}
+                        placeholder={t("parentPortal.messagePlaceholder")}
+                      />
+                    ) : (
+                      <p className="text-muted-foreground text-sm p-8">{t("parentPortal.selectConversation")}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </TabsContent>
 
           {/* Points Tab */}
