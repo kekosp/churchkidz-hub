@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Calendar, MessageSquare, Users, Trophy, Send, CheckCircle, Clock, XCircle, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import ConversationList from "@/components/messages/ConversationList";
+import ChatView from "@/components/messages/ChatView";
 
 const ParentPortal = () => {
   const navigate = useNavigate();
