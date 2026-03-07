@@ -1,20 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/layout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Inbox, Send, Mail, Reply, CheckCircle } from "lucide-react";
-import { format } from "date-fns";
+import { Mail, Send } from "lucide-react";
 import { toast } from "sonner";
+import ConversationList from "@/components/messages/ConversationList";
+import ChatView from "@/components/messages/ChatView";
 
 const Messages = () => {
   const navigate = useNavigate();
@@ -24,7 +21,7 @@ const Messages = () => {
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showCompose, setShowCompose] = useState(false);
-  const [replyTo, setReplyTo] = useState<any>(null);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
 
   // Compose form
   const [receiverId, setReceiverId] = useState("");
@@ -49,7 +46,6 @@ const Messages = () => {
         .order("created_at", { ascending: false });
       setMessages(data || []);
 
-      // Collect unique user IDs to fetch names
       const userIds = new Set<string>();
       (data || []).forEach((m: any) => {
         userIds.add(m.sender_id);
@@ -74,7 +70,6 @@ const Messages = () => {
   const fetchRecipients = async () => {
     if (!user) return;
     try {
-      // Fetch all profiles the user can see (RLS handles visibility)
       const { data } = await supabase
         .from("profiles")
         .select("id, full_name, email")
@@ -110,22 +105,68 @@ const Messages = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user, t]);
 
-  const sendMessage = async () => {
-    const targetId = replyTo ? (replyTo.sender_id === user?.id ? replyTo.receiver_id : replyTo.sender_id) : receiverId;
-    if (!user || !targetId || !content.trim()) return;
+  // Group messages into conversations by the other user
+  const conversations = useMemo(() => {
+    if (!user) return [];
+    const convMap: Record<string, { otherId: string; msgs: any[] }> = {};
+    messages.forEach((m) => {
+      const otherId = m.sender_id === user.id ? m.receiver_id : m.sender_id;
+      if (!convMap[otherId]) convMap[otherId] = { otherId, msgs: [] };
+      convMap[otherId].msgs.push(m);
+    });
+
+    return Object.values(convMap)
+      .map((c) => {
+        const latest = c.msgs[0]; // already sorted desc
+        const unreadCount = c.msgs.filter(m => m.receiver_id === user.id && !m.is_read).length;
+        return {
+          oderId: c.otherId,
+          name: profiles[c.otherId] || c.otherId.slice(0, 8),
+          lastMessage: latest.content,
+          lastDate: latest.created_at,
+          unreadCount,
+        };
+      })
+      .sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
+  }, [messages, user, profiles]);
+
+  // Get messages for selected conversation
+  const chatMessages = useMemo(() => {
+    if (!user || !selectedConversation) return [];
+    return messages.filter(
+      (m) =>
+        (m.sender_id === user.id && m.receiver_id === selectedConversation) ||
+        (m.receiver_id === user.id && m.sender_id === selectedConversation)
+    );
+  }, [messages, user, selectedConversation]);
+
+  // Mark unread messages as read when opening a conversation
+  useEffect(() => {
+    if (!user || !selectedConversation) return;
+    const unread = chatMessages.filter(m => m.receiver_id === user.id && !m.is_read);
+    if (unread.length > 0) {
+      const ids = unread.map(m => m.id);
+      supabase.from("messages").update({ is_read: true }).in("id", ids).then(() => {
+        setMessages(prev => prev.map(m => ids.includes(m.id) ? { ...m, is_read: true } : m));
+      });
+    }
+  }, [selectedConversation, chatMessages, user]);
+
+  const sendComposeMessage = async () => {
+    if (!user || !receiverId || !content.trim()) return;
     try {
       const { error } = await supabase.from("messages").insert({
         sender_id: user.id,
-        receiver_id: targetId,
-        subject: subject.trim() || (replyTo?.subject ? `Re: ${replyTo.subject}` : null),
+        receiver_id: receiverId,
+        subject: subject.trim() || null,
         content: content.trim(),
       });
       if (error) throw error;
       toast.success(t("messages.messageSent"));
       setShowCompose(false);
-      setReplyTo(null);
       setContent("");
       setSubject("");
+      setSelectedConversation(receiverId);
       setReceiverId("");
       fetchMessages();
     } catch {
@@ -133,171 +174,90 @@ const Messages = () => {
     }
   };
 
-  const markAsRead = async (msgId: string) => {
-    await supabase.from("messages").update({ is_read: true }).eq("id", msgId);
-    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, is_read: true } : m));
-  };
-
-  const inboxMessages = messages.filter(m => m.receiver_id === user?.id);
-  const sentMessages = messages.filter(m => m.sender_id === user?.id);
-  const unreadCount = inboxMessages.filter(m => !m.is_read).length;
+  const sendChatMessage = useCallback(async (text: string) => {
+    if (!user || !selectedConversation) return;
+    const { error } = await supabase.from("messages").insert({
+      sender_id: user.id,
+      receiver_id: selectedConversation,
+      content: text,
+    });
+    if (error) {
+      toast.error(t("messages.messageError"));
+      throw error;
+    }
+    fetchMessages();
+  }, [user, selectedConversation, t]);
 
   const getName = (id: string | undefined) => id ? (profiles[id] || id.slice(0, 8)) : "";
 
-  const renderMessage = (msg: any, type: "inbox" | "sent") => (
-    <Card
-      key={msg.id}
-      className={!msg.is_read && type === "inbox" ? "border-primary/30 bg-primary/5" : ""}
-    >
-      <CardContent className="pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium">
-                {type === "inbox" ? `${t("messages.from")}: ${getName(msg.sender_id)}` : `${t("messages.to")}: ${getName(msg.receiver_id)}`}
-              </span>
-              {!msg.is_read && type === "inbox" && (
-                <Badge className="bg-primary text-primary-foreground text-[10px]">{t("parentPortal.unread")}</Badge>
-              )}
-            </div>
-            {msg.subject && <p className="text-sm font-medium text-foreground">{msg.subject}</p>}
-            <p className="text-sm text-muted-foreground mt-1">{msg.content}</p>
-            <p className="text-xs text-muted-foreground/60 mt-2">
-              {format(new Date(msg.created_at), "yyyy-MM-dd HH:mm")}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {type === "inbox" && !msg.is_read && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => markAsRead(msg.id)} title={t("messages.markRead")}>
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </Button>
-            )}
-            {type === "inbox" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => {
-                  setReplyTo(msg);
-                  setContent("");
-                  setSubject("");
-                }}
-                title={t("messages.reply")}
-              >
-                <Reply className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const showChat = !!selectedConversation;
 
   return (
     <AppLayout title={t("messages.title")}>
-      <div className="space-y-4">
-        <div className="flex justify-end">
-          <Dialog open={showCompose} onOpenChange={setShowCompose}>
-            <DialogTrigger asChild>
-              <Button><Mail className="h-4 w-4 mr-2" />{t("messages.compose")}</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t("messages.compose")}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Select value={receiverId} onValueChange={setReceiverId}>
-                  <SelectTrigger><SelectValue placeholder={t("messages.selectRecipient")} /></SelectTrigger>
-                  <SelectContent>
-                    {recipients.map(r => (
-                      <SelectItem key={r.id} value={r.id}>{r.full_name} ({r.email})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input placeholder={t("parentPortal.subject")} value={subject} onChange={e => setSubject(e.target.value)} />
-                <Textarea
-                  placeholder={t("parentPortal.messagePlaceholder")}
-                  value={content}
-                  onChange={e => setContent(e.target.value)}
-                  rows={4}
-                />
-                <Button onClick={sendMessage} disabled={!receiverId || !content.trim()} className="w-full">
-                  <Send className="h-4 w-4 mr-2" />{t("parentPortal.send")}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+      <div className="h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-0 md:gap-4 overflow-hidden">
+        {/* Conversation List - hidden on mobile when chat is open */}
+        <div className={`${showChat ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 lg:w-96 shrink-0 border-r-0 md:border-r`}>
+          <div className="flex items-center justify-between p-3 border-b">
+            <h2 className="font-semibold text-sm">{t("messages.title")}</h2>
+            <Dialog open={showCompose} onOpenChange={setShowCompose}>
+              <DialogTrigger asChild>
+                <Button size="sm"><Mail className="h-4 w-4 mr-1.5" />{t("messages.compose")}</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t("messages.compose")}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Select value={receiverId} onValueChange={setReceiverId}>
+                    <SelectTrigger><SelectValue placeholder={t("messages.selectRecipient")} /></SelectTrigger>
+                    <SelectContent>
+                      {recipients.map(r => (
+                        <SelectItem key={r.id} value={r.id}>{r.full_name} ({r.email})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input placeholder={t("parentPortal.subject")} value={subject} onChange={e => setSubject(e.target.value)} />
+                  <Input
+                    placeholder={t("parentPortal.messagePlaceholder")}
+                    value={content}
+                    onChange={e => setContent(e.target.value)}
+                  />
+                  <Button onClick={sendComposeMessage} disabled={!receiverId || !content.trim()} className="w-full">
+                    <Send className="h-4 w-4 mr-2" />{t("parentPortal.send")}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            <ConversationList
+              conversations={conversations}
+              onSelect={setSelectedConversation}
+              selectedId={selectedConversation}
+              loading={loading}
+              emptyText={t("messages.noInbox")}
+            />
+          </div>
         </div>
 
-        {/* Reply Dialog */}
-        <Dialog open={!!replyTo} onOpenChange={(open) => !open && setReplyTo(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("messages.reply")} - {getName(replyTo?.sender_id === user?.id ? replyTo?.receiver_id : replyTo?.sender_id)}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {replyTo?.subject && (
-                <p className="text-sm text-muted-foreground">{t("parentPortal.subject")}: {replyTo.subject}</p>
-              )}
-              <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-                <p className="font-medium mb-1">{t("messages.originalMessage")}:</p>
-                <p>{replyTo?.content}</p>
-              </div>
-              <Textarea
-                placeholder={t("parentPortal.messagePlaceholder")}
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                rows={4}
-                autoFocus
-              />
-              <Button onClick={sendMessage} disabled={!content.trim()} className="w-full">
-                <Reply className="h-4 w-4 mr-2" />{t("messages.reply")}
-              </Button>
+        {/* Chat View */}
+        <div className={`${showChat ? "flex" : "hidden md:flex"} flex-col flex-1 min-w-0`}>
+          {selectedConversation ? (
+            <ChatView
+              messages={chatMessages}
+              currentUserId={user?.id || ""}
+              otherName={getName(selectedConversation)}
+              onSend={sendChatMessage}
+              onBack={() => setSelectedConversation(null)}
+              sendLabel={t("parentPortal.send")}
+              placeholder={t("parentPortal.messagePlaceholder")}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+              {t("messages.selectConversation") || "Select a conversation to start chatting"}
             </div>
-          </DialogContent>
-        </Dialog>
-
-        <Tabs defaultValue="inbox" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="inbox" className="flex items-center gap-2">
-              <Inbox className="h-4 w-4" />
-              {t("messages.inbox")}
-              {unreadCount > 0 && (
-                <Badge className="h-5 min-w-5 px-1.5 text-[10px] bg-destructive text-destructive-foreground rounded-full">
-                  {unreadCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="sent" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              {t("messages.sentTab")}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="inbox" className="space-y-3 mt-4">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
-            ) : inboxMessages.length === 0 ? (
-              <Card><CardContent className="py-8 text-center text-muted-foreground">{t("messages.noInbox")}</CardContent></Card>
-            ) : (
-              inboxMessages.map(msg => renderMessage(msg, "inbox"))
-            )}
-          </TabsContent>
-
-          <TabsContent value="sent" className="space-y-3 mt-4">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
-            ) : sentMessages.length === 0 ? (
-              <Card><CardContent className="py-8 text-center text-muted-foreground">{t("messages.noSent")}</CardContent></Card>
-            ) : (
-              sentMessages.map(msg => renderMessage(msg, "sent"))
-            )}
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </AppLayout>
   );
