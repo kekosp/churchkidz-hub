@@ -27,6 +27,7 @@ import ChildDashboard from "./pages/ChildDashboard";
 import AuditLog from "./pages/AuditLog";
 import ParentPortal from "./pages/ParentPortal";
 import Messages from "./pages/Messages";
+import AbsenceExcuses from "./pages/AbsenceExcuses";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
           <Route path="/audit-log" element={<AuditLog />} />
           <Route path="/parent-portal" element={<ParentPortal />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/absence-excuses" element={<AbsenceExcuses />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -36,6 +36,7 @@ import {
   ScrollText,
   Home,
   MessageSquare,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -286,6 +287,12 @@ export function AppSidebar() {
       icon: UserX,
       href: "/absent-children",
       roles: ["admin"],
+    },
+    {
+      title: t("excuses.title"),
+      icon: FileText,
+      href: "/absence-excuses",
+      roles: ["admin", "servant"],
     },
     {
       title: t("dashboard.tayoPoints"),
