@@ -289,6 +289,12 @@ export function AppSidebar() {
       roles: ["admin"],
     },
     {
+      title: t("excuses.title"),
+      icon: FileText,
+      href: "/absence-excuses",
+      roles: ["admin", "servant"],
+    },
+    {
       title: t("dashboard.tayoPoints"),
       icon: Trophy,
       href: "/tayo-points",
