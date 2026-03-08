@@ -493,6 +493,8 @@ const translations: Record<Language, Record<string, string>> = {
     'parentPortal.updateChildInfo': 'Update Child Info',
     'parentPortal.childUpdated': 'Child info updated successfully',
     'parentPortal.updateError': 'Failed to update child info',
+    'parentPortal.unknownUser': 'Unknown User',
+    'parentPortal.selectConversation': 'Select a conversation to start chatting',
 
     // Messages page
     'messages.title': 'Messages',
@@ -993,6 +995,8 @@ const translations: Record<Language, Record<string, string>> = {
     'parentPortal.updateChildInfo': 'تحديث معلومات الطفل',
     'parentPortal.childUpdated': 'تم تحديث معلومات الطفل بنجاح',
     'parentPortal.updateError': 'فشل في تحديث معلومات الطفل',
+    'parentPortal.unknownUser': 'مستخدم غير معروف',
+    'parentPortal.selectConversation': 'اختر محادثة لبدء الدردشة',
 
     // Messages page
     'messages.title': 'الرسائل',
