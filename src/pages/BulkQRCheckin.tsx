@@ -95,7 +95,7 @@ const BulkQRCheckin = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && userRole && userRole === "parent") {
+    if (!authLoading && userRole !== "admin" && userRole !== "servant") {
       toast.error(t('bulkQR.noPermission'));
       navigate("/dashboard");
     }
