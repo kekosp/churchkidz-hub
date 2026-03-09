@@ -268,7 +268,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (!whatsappResponse.ok) {
       const errorText = await whatsappResponse.text();
       console.error("WhatsApp Cloud API error:", errorText);
-      throw new Error(`Failed to send WhatsApp message: ${errorText}`);
+      // Return generic error to client - don't leak API details
+      return new Response(
+        JSON.stringify({ error: 'Failed to send notification. Please try again.' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const whatsappData = await whatsappResponse.json();
