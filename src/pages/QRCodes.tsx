@@ -19,6 +19,14 @@ interface Child {
   school_grade?: string;
 }
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const QRCodes = () => {
   const navigate = useNavigate();
   const { user, userRole, loading: authLoading } = useAuth();
@@ -49,11 +57,13 @@ const QRCodes = () => {
       const svg = document.getElementById(`qr-${child.id}`);
       if (!svg) return "";
       const svgData = new XMLSerializer().serializeToString(svg);
+      const childName = escapeHtml(child.full_name);
+      const schoolGrade = child.school_grade ? escapeHtml(child.school_grade) : "";
       return `
         <div style="display:inline-block;text-align:center;margin:16px;page-break-inside:avoid;">
           <img src="data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}" width="200" height="200" />
-          <p style="margin:8px 0 0;font-weight:bold;font-size:14px;">${child.full_name}</p>
-          ${child.school_grade ? `<p style="margin:2px 0 0;font-size:12px;color:#666;">${child.school_grade}</p>` : ""}
+          <p style="margin:8px 0 0;font-weight:bold;font-size:14px;">${childName}</p>
+          ${schoolGrade ? `<p style="margin:2px 0 0;font-size:12px;color:#666;">${schoolGrade}</p>` : ""}
         </div>
       `;
     }).join("");
