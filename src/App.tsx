@@ -7,7 +7,6 @@ import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { BugReportButton } from "@/components/BugReportButton";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Children from "./pages/Children";
@@ -42,7 +41,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Auth />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/children" element={<ProtectedRoute><Children /></ProtectedRoute>} />
