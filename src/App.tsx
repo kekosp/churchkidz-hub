@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { BugReportButton } from "@/components/BugReportButton";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Children from "./pages/Children";
 import Servants from "./pages/Servants";
@@ -43,6 +44,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Auth />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/children" element={<ProtectedRoute><Children /></ProtectedRoute>} />
           <Route path="/servants" element={<ProtectedRoute allowedRoles={["admin", "servant"]}><Servants /></ProtectedRoute>} />
