@@ -91,7 +91,7 @@ const Messages = () => {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("staff-messages")
+      .channel(`staff-messages:${user.id}`, { config: { private: true } })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
         const msg = payload.new as any;
         if (msg.receiver_id === user.id || msg.sender_id === user.id) {

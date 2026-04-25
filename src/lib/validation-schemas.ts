@@ -21,6 +21,7 @@ export const signupSchema = z.object({
     .string()
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters")
+    .regex(/^[^<>]*$/, "Name must not contain HTML characters")
     .trim(),
   phone_number: z
     .string()
@@ -61,6 +62,7 @@ export const childSchema = z.object({
   school_grade: z
     .string()
     .max(50, "School grade must be less than 50 characters")
+    .regex(/^[^<>]*$/, "School grade must not contain HTML characters")
     .optional()
     .or(z.literal("")),
   attendance_status: z.string().optional().or(z.literal("")),
